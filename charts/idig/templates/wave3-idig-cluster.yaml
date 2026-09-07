@@ -1,0 +1,101 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.idigCluster.enabled (or (eq $wave "3") (eq $wave "all")) }}
+{{- include "idig.validateOperatorScope" . }}
+{{- include "idig.validateImagePullSecret" . }}
+{{- if not (or (eq .Values.idigCluster.profile "dev") (eq .Values.idigCluster.profile "prod")) }}
+{{- fail (printf "idigCluster.profile=%q must be \"dev\" or \"prod\"" .Values.idigCluster.profile) }}
+{{- end }}
+# Wave 3 -- IDIG cluster: the DatapowerInteractGatewayCluster custom
+# resource. Requires the IDIG operator (wave 1) and Valkey instance
+# (wave 2) ready.
+apiVersion: datapowerinteractgateway.ibm.com/v1beta1
+kind: DatapowerInteractGatewayCluster
+metadata:
+  name: {{ .Values.idigCluster.name }}
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  {{- include "idig.crImagePullSecrets" . | nindent 2 }}
+  imageRegistry: {{ .Values.global.imageRegistry }}
+  version: {{ .Chart.AppVersion }}
+  profile: {{ .Values.idigCluster.profile }}
+
+  license:
+    accept: {{ .Values.global.license.accept }}
+    use: {{ .Values.global.license.use }}
+    license: {{ .Values.global.license.id | quote }}
+
+  enableAnalytics: {{ .Values.idigCluster.enableAnalytics }}
+  enableDevPortal: {{ .Values.idigCluster.enableDevPortal }}
+
+  domain: {{ .Values.global.domain | quote }}
+
+  {{- if .Values.idigCluster.tenantName }}
+  tenantName: {{ .Values.idigCluster.tenantName | quote }}
+  {{- end }}
+  {{- if .Values.idigCluster.groupName }}
+  groupName: {{ .Values.idigCluster.groupName | quote }}
+  {{- end }}
+
+  {{- if .Values.idigCluster.watsonxSecret }}
+  # Optional: pre-created secret with WATSONX_API_KEY / WATSONX_PROJECT_ID.
+  # Omitted entirely when unset -- GenAI service is then not deployed.
+  watsonxSecret: {{ .Values.idigCluster.watsonxSecret | quote }}
+  {{- end }}
+
+  {{- if .Values.idigCluster.customIngressCertificate }}
+  customIngressCertificate: {{ .Values.idigCluster.customIngressCertificate | quote }}
+  {{- end }}
+
+  {{- if .Values.issuer.certManagerIssuer.name }}
+  certManagerIssuer:
+    name: {{ .Values.issuer.certManagerIssuer.name | quote }}
+    kind: {{ .Values.issuer.certManagerIssuer.kind | quote }}
+  {{- end }}
+
+  {{- $analyticsStorageClass := .Values.idigCluster.analyticsStorage.storageClass | default .Values.global.storageClass }}
+  {{- $devPortalStorageClass := .Values.idigCluster.devPortalStorage.storageClass | default .Values.global.storageClass }}
+  {{- if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
+  {{- end }}
+
+  {{- if .Values.idigCluster.enableAnalytics }}
+  analyticsSettings:
+    clientSubjectDN: {{ .Values.idigCluster.analyticsSettings.clientSubjectDN | quote }}
+  {{- end }}
+  # The Analytics/OpenSearch subsystem is always deployed by the IDIG
+  # operator regardless of enableAnalytics -- that flag only toggles
+  # analytics-proxy/analytics-ui and switches the operator to a "minimal
+  # analytics configuration" (see IDIG operator logs: "Analytics subsystem
+  # enabled (always deployed)"). Without an explicit analyticsStorage
+  # block, the operator falls back to its own profile-derived default
+  # (200Gi for profile "dev"), not this chart's values -- so this must
+  # render unconditionally, not gated on enableAnalytics.
+  analyticsStorage:
+    type: {{ .Values.idigCluster.analyticsStorage.type }}
+    shared:
+      volumeClaimTemplate:
+        {{- if $analyticsStorageClass }}
+        storageClassName: {{ $analyticsStorageClass | quote }}
+        {{- end }}
+        volumeSize: {{ .Values.idigCluster.analyticsStorage.volumeSize | quote }}
+
+  {{- if .Values.idigCluster.enableDevPortal }}
+  devPortalStorage:
+    type: shared
+    shared:
+      volumeClaimTemplate:
+        {{- if $devPortalStorageClass }}
+        storageClassName: {{ $devPortalStorageClass | quote }}
+        {{- end }}
+        volumeSize: {{ .Values.idigCluster.devPortalStorage.volumeSize | quote }}
+  {{- end }}
+
+  # NanoGateway configuration is handled by the profile template.
+  # To customize NanoGateway settings, patch the NanoGatewayCluster CR after creation.
+  nanoGateway:
+    gatewayDomain: {{ printf "nanogw.%s" .Values.global.domain }}
+{{- end }}

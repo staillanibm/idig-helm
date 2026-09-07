@@ -1,0 +1,31 @@
+---
+# ImageTagMirrorSet: redirige les pulls depuis le registre IBM interne
+# (docker-na.artifactory.swg-devops.com/apic-dev-docker-local/velox)
+# vers le registre Quay local (ibmorg/).
+#
+# L'opérateur IDIG v12.1.1.x hardcode les URLs source pour certains composants
+# (analytics-proxy, ...) au lieu de respecter spec.imageRegistry de la CR.
+# Ce mirror règle le problème au niveau MCO (Machine Config Operator) sans
+# patcher les Deployments à la main.
+#
+# Appliqué une seule fois sur le cluster :
+#   oc apply -f charts/idig/docs/imagetagmirrorset-idig.yaml
+#
+# Note : l'application déclenche un rolling reboot des MachineConfigPools
+# (master + worker). Surveiller avec :
+#   oc get mcp
+#   oc get nodes -w
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  name: idig-artifactory-to-quay
+spec:
+  imageTagMirrors:
+    # analytics-proxy et autres images velox IBM internes
+    - source: docker-na.artifactory.swg-devops.com/apic-dev-docker-local/velox
+      mirrors:
+        - quay-quay-quay.apps.itz-h670hx.infra01-lb.fra02.techzone.ibm.com/ibmorg
+    # cp.icr.io NanoGateway (datapower-nano-*) — hardcodé par l'opérateur NanoGW
+    - source: cp.icr.io/cp/datapower
+      mirrors:
+        - quay-quay-quay.apps.itz-h670hx.infra01-lb.fra02.techzone.ibm.com/ibmorg

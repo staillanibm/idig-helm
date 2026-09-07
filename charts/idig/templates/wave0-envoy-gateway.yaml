@@ -1,0 +1,61 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.envoyGateway.enabled (or (eq $wave "0") (eq $wave "all")) }}
+# Wave 0 -- IDIG-specific configuration on top of an already-installed
+# Envoy Gateway controller (see chart README "Prerequisites" -> Kubernetes-
+# only; not installed by this chart, same treatment as cert-manager).
+#
+# Kubernetes only. Has no OpenShift equivalent -- on OCP, IDIG exposes its
+# endpoints via plain Route objects instead of Gateway API, and this
+# template renders nothing when envoyGateway.enabled=false (set that on
+# OCP; see examples/values-ocp.yaml).
+#
+# Namespace is deliberately envoyGateway.namespace, not idig.namespace --
+# these objects belong to Envoy Gateway's own install namespace, not the
+# IDIG namespace.
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: {{ .Values.envoyGateway.proxyConfigName }}
+  namespace: {{ .Values.envoyGateway.namespace }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: {{ .Values.envoyGateway.proxyConfigName }}
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  mergeGateways: true
+  backendTLS:
+    minVersion: "1.3"
+    maxVersion: "1.3"
+  {{- if .Values.envoyGateway.nodeSelector }}
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        pod:
+          nodeSelector:
+            {{- toYaml .Values.envoyGateway.nodeSelector | nindent 12 }}
+  {{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ .Values.envoyGateway.gatewayClassName }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: {{ .Values.envoyGateway.gatewayClassName }}
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: {{ .Values.envoyGateway.proxyConfigName }}
+    namespace: {{ .Values.envoyGateway.namespace }}
+{{- end }}

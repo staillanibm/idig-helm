@@ -1,0 +1,52 @@
+# Development profile -- minimal resources.
+# Maps to the vendor bundle's samples/idig-cluster-dev.yaml.
+#
+# Usage:
+#   helm upgrade --install idig-prereqs charts/idig -f charts/idig/examples/values-dev.yaml \
+#     --set deployment.wave=0 -n idig --create-namespace
+
+global:
+  namespace: idig
+  imageRegistry: "quay-quay-quay.apps.itz-h670hx.infra01-lb.fra02.techzone.ibm.com/ibmorg" # REQUIRED: set to your mirrored registry (see scripts/mirror-images.sh)
+  imagePullSecret: "idig-registry-secret" # REQUIRED here: target cluster is not the same cluster as the registry, so same-namespace-only pull doesn't apply
+  domain: "apps.itz-ae0nlz.infra01-lb.fra02.techzone.ibm.com" # REQUIRED: base domain for ingress endpoints
+  license:
+    accept: true # REQUIRED: set to true to accept the IBM license
+idigCluster:
+  profile: dev
+  # Analytics/OpenSearch is always deployed by the IDIG operator regardless
+  # of this flag -- it only toggles analytics-proxy/analytics-ui and a
+  # "minimal analytics configuration" mode. Set to true only if you need
+  # those UI/proxy components; it does not change Analytics' own resource
+  # footprint (see analyticsStorage below for that).
+  enableAnalytics: true
+  enableDevPortal: true
+  tenantName: "idig"
+  groupName: "dev"
+  # analyticsSettings.clientSubjectDN is only required when enableAnalytics: true.
+  # The default in values.yaml is correct (RFC 2253 CN-first order); override here
+  # if your cert-manager issuer produces a different subject DN.
+  # analyticsSettings:
+  #   clientSubjectDN: "CN=analytics-ingestion-client,O=cert-manager"
+
+  # values.yaml's chart-wide default (200Gi) is sized for prod, not dev.
+  # The IDIG operator scales Analytics/OpenSearch's own memory request
+  # roughly in proportion to this volume size (observed: 200Gi -> 6Gi
+  # memory request, 5Gi -> 3Gi) -- reducing it here is the effective lever
+  # for a dev cluster's resource footprint, since enableAnalytics itself
+  # is not (see above).
+  analyticsStorage:
+    volumeSize: 5Gi
+  devPortalStorage:
+    volumeSize: 20Gi
+envoyGateway:
+  enabled: false
+# On OCP, Gateway API CRDs are owned/managed by the OpenShift Ingress
+# Operator and rejected by a ValidatingAdmissionPolicy if this chart tries
+# to install its own copies. APIC CRDs may also already be owned by OLM.
+# Set to true instead on vanilla Kubernetes with no pre-existing APIC.
+idig-crds-vendor:
+  enabled: false
+idigOperator:
+  enabled: true
+  image: "idig-operator:op.1.0.1.g.53aec8c.b.v12112ifix1am3536.n.21@sha256:b810c3bfd491d3593cee507fc209e8de4a5da62e2947ad90e5877075939ffc60"

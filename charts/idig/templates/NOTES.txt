@@ -1,0 +1,101 @@
+IDIG chart -- wave "{{ .Values.deployment.wave }}" applied to namespace {{ include "idig.namespace" . }}.
+
+{{- if eq (include "idig.wave" .) "" }}
+
+  WARNING: deployment.wave is not set -- nothing was deployed.
+  Set it explicitly:
+    --set deployment.wave=0   (trust chain + certificates)
+    --set deployment.wave=1   (all operators)
+    --set deployment.wave=2   (Valkey instance)
+    --set deployment.wave=3   (IDIG cluster CR)
+    --set deployment.wave=all (everything, ArgoCD mode)
+
+{{- else if eq (include "idig.wave" .) "0" }}
+
+Wave 0 (PKI) deployed. Verify cert-manager processed the
+Certificates (all 9 should reach Ready=True; this can take a few seconds):
+
+  kubectl get certificates -n {{ include "idig.namespace" . }}
+
+Expected certificates:
+  portal-admin-client, gateway-client-client, analytics-ingestion-client,
+  gateway-service, gateway-peering, devportal-admin-client,
+  nano-gateway-mgmt-client, {{ .Values.valkey.tlsSecretName }}
+{{- if .Values.issuer.createSelfSigned }}
+  ingress-ca (the CA certificate for the self-signed trust chain)
+{{- end }}
+
+Verify each is Ready:
+
+  kubectl wait certificate --all -n {{ include "idig.namespace" . }} \
+    --for=condition=Ready --timeout=120s
+
+{{ if .Values.issuer.createSelfSigned -}}
+Trust chain created:
+  selfsigning-issuer  →  ingress-ca  →  {{ .Values.issuer.name }} ({{ .Values.issuer.kind }})
+{{- else }}
+External issuer in use: {{ .Values.issuer.name }} ({{ .Values.issuer.kind }})
+  (issuer.createSelfSigned=false -- no self-signed chain was created)
+{{- end }}
+
+NOTE: this chart does not create the EnvoyProxy/GatewayClass resources IDIG
+needs (namespace {{ .Values.envoyGateway.namespace }}, name
+{{ .Values.envoyGateway.proxyConfigName }} / {{ .Values.envoyGateway.gatewayClassName }}).
+Create them manually per IBM's installation guide if you haven't already --
+see the chart README's Wave 0 section.
+
+Then proceed to wave 1 (all operators): --set deployment.wave=1
+
+{{- else if eq (include "idig.wave" .) "1" }}
+
+Wave 1 (all operators) deployed. Wait for them to be ready:
+
+  kubectl -n {{ include "idig.namespace" . }} rollout status deployment/ibm-apiconnect
+  kubectl -n {{ include "idig.namespace" . }} rollout status deployment/datapower-nano-operator
+  kubectl -n {{ include "idig.namespace" . }} rollout status deployment/valkey-operator
+  kubectl -n {{ include "idig.namespace" . }} rollout status deployment/idig-gw-operator
+  kubectl -n {{ include "idig.namespace" . }} rollout status deployment/idig-operator
+
+Then proceed to wave 2 (Valkey instance): --set deployment.wave=2
+
+{{- else if eq (include "idig.wave" .) "2" }}
+
+Wave 2 (Valkey instance) deployed. Wait for it to be ready:
+
+  kubectl -n {{ include "idig.namespace" . }} wait --for=condition=ready pod \
+    -l app.kubernetes.io/name=valkey --timeout=300s
+
+Then proceed to wave 3 (IDIG cluster): --set deployment.wave=3
+
+{{- else if or (eq (include "idig.wave" .) "3") (eq (include "idig.wave" .) "all") }}
+
+Wave {{ .Values.deployment.wave }} deployed. Track the IDIG cluster rollout (can take up to 20 minutes):
+
+  kubectl get datapowerinteractgatewaycluster {{ .Values.idigCluster.name }} \
+    -n {{ include "idig.namespace" . }} -o jsonpath='{.status.phase}{"\n"}'
+
+Once phase is "Ready", list the Gateway API ingress endpoints:
+
+  kubectl get gateway,httproute -n {{ include "idig.namespace" . }}
+
+NOTE: On OpenShift the Ingress Operator owns the GatewayClass / Gateway
+objects and exposes each HTTPRoute via an OCP Route automatically -- check
+Routes as well if the above shows no external addresses:
+
+  oc get routes -n {{ include "idig.namespace" . }}
+
+Console UI admin credentials:
+
+  Username: administrator
+    (NOT the email in the secret -- the 'email' field is only a profile
+    attribute; the login id is the fixed UMC user "administrator".)
+
+  Password:
+    kubectl get secret {{ .Values.idigCluster.name }}-idig-admin-pass \
+      -n {{ include "idig.namespace" . }} \
+      -o jsonpath='{.data.password}' | base64 -d && echo
+
+  On first successful login you will be prompted to change the password
+  (the secret's 'forcePasswordChange' field).
+
+{{- end }}

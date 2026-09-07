@@ -1,0 +1,432 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.idigOperator.enabled (or (eq $wave "1") (eq $wave "all")) }}
+{{- include "idig.validateOperatorScope" . }}
+{{- include "idig.validateImagePullSecret" . }}
+# Wave 1 -- IDIG operator: cluster-scoped RBAC.
+# Kept separate from wave1-idig-operator-namespaced.yaml so a future
+# clusterWide operatorScope mode only needs to touch this file.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: idig-operator-manager-role
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - componentstatuses
+  - namespaces
+  - nodes
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - delete
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
+  - analytics.apiconnect.ibm.com
+  resources:
+  - analyticsclusters
+  - analyticsclusters/finalizers
+  - analyticsclusters/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - clusterissuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - clusteroperators
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - update
+- apiGroups:
+  - datapowerinteractgateway.ibm.com
+  resources:
+  - datapowerinteractgatewayclusters
+  - datapowerinteractgatewayclusters/finalizers
+  - datapowerinteractgatewayclusters/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - devportal.apiconnect.ibm.com
+  resources:
+  - devportalclusters
+  - devportalclusters/finalizers
+  - devportalclusters/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.envoyproxy.io
+  resources:
+  - backends
+  - securitypolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - backendtlspolicies
+  - gatewayclasses
+  - gateways
+  - httproutes
+  - tlsroutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - podmonitors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - nano.datapower.ibm.com
+  resources:
+  - apis
+  - assemblies
+  - autoscaleconfigs
+  - jwtproviders
+  - mcpprompts
+  - mcpresources
+  - mcptools
+  - oauthproviders
+  - runtimes
+  - tlsclientprofiles
+  - tlsserverprofiles
+  - userdefinedpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nano.datapower.ibm.com
+  resources:
+  - apis/status
+  - assemblies/status
+  - autoscaleconfigs/status
+  - jwtproviders/status
+  - mcpprompts/status
+  - mcpresources/status
+  - mcptools/status
+  - oauthproviders/status
+  - runtimes/status
+  - tlsclientprofiles/status
+  - tlsserverprofiles/status
+  - userdefinedpolicies/status
+  verbs:
+  - get
+- apiGroups:
+  - nanogateway.apiconnect.ibm.com
+  resources:
+  - nanogatewayclusters
+  - nanogatewayclusters/finalizers
+  - nanogatewayclusters/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: idig-operator-manager-rolebinding
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: idig-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: idig-operator-controller-manager
+  namespace: {{ include "idig.namespace" . }}
+---
+# Webhook lifecycle ClusterRoles/Bindings — new in 12.1.1.2
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: idig-operator-webhook-delete-role
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+rules:
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - get
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: idig-operator-webhook-update-role
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+rules:
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - get
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: idig-operator-webhook-delete-rolebinding
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: idig-operator-webhook-delete-role
+subjects:
+- kind: ServiceAccount
+  name: idig-operator-controller-manager
+  namespace: {{ include "idig.namespace" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: idig-operator-webhook-update-rolebinding
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: idig-operator-webhook-update-role
+subjects:
+- kind: ServiceAccount
+  name: idig-operator-controller-manager
+  namespace: {{ include "idig.namespace" . }}
+---
+# Webhook Service — namespaced, new in 12.1.1.2
+apiVersion: v1
+kind: Service
+metadata:
+  name: idig-operator-webhook-service
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    app.kubernetes.io/name: idig-operator
+---
+# MutatingWebhookConfiguration — cluster-scoped, new in 12.1.1.2
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: idig-operator-mutating-webhook-configuration
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: idig-operator-webhook-service
+      namespace: {{ include "idig.namespace" . }}
+      path: /mutate-datapowerinteractgateway-ibm-com-v1beta1-datapowerinteractgatewaycluster
+  failurePolicy: Fail
+  name: mdatapowerinteractgatewaycluster.kb.io
+  rules:
+  - apiGroups:
+    - datapowerinteractgateway.ibm.com
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - datapowerinteractgatewayclusters
+  sideEffects: None
+---
+# ValidatingWebhookConfiguration — cluster-scoped, new in 12.1.1.2
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: idig-operator-validating-webhook-configuration
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: idig-operator-webhook-service
+      namespace: {{ include "idig.namespace" . }}
+      path: /validate-datapowerinteractgateway-ibm-com-v1beta1-datapowerinteractgatewaycluster
+  failurePolicy: Fail
+  name: vdatapowerinteractgatewaycluster.kb.io
+  rules:
+  - apiGroups:
+    - datapowerinteractgateway.ibm.com
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - datapowerinteractgatewayclusters
+  sideEffects: None
+{{- end }}

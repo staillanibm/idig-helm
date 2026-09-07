@@ -1,0 +1,9 @@
+dependencies:
+- name: idig-crds
+  repository: file://charts/idig-crds
+  version: 0.1.0
+- name: idig-crds-vendor
+  repository: file://charts/idig-crds-vendor
+  version: 0.1.0
+digest: sha256:f9b11203410fc60fe10e9dd39ea3cf613aa4ca924cae14643f05ce481ccfafb4
+generated: "2026-08-31T19:02:34.664063+02:00"

@@ -1,0 +1,70 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.valkey.enabled (or (eq $wave "2") (eq $wave "all")) }}
+{{- include "idig.validateOperatorScope" . }}
+{{- include "idig.validateImagePullSecret" . }}
+# Wave 2 -- Valkey instance (the standalone Valkey custom resource).
+# Requires the Valkey operator (wave 1) ready, and valkey-tls (auto-created
+# in wave 0 by cert-manager). valkey-secret (the auth password) is
+# auto-created below when valkey.autoGenerateSecret=true (the default) --
+# entirely internal to this chart's own Valkey instance, unlike the
+# registry/entitlement-key/WatsonX secrets in the README's "Prerequisites",
+# which authenticate against external systems this chart has no control
+# over. Set valkey.autoGenerateSecret=false to manage this secret yourself
+# instead (e.g. via an external secrets manager).
+{{- if .Values.valkey.autoGenerateSecret }}
+{{- $existingSecret := lookup "v1" "Secret" (include "idig.namespace" .) .Values.valkey.credentialSecretName }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.valkey.credentialSecretName | quote }}
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: valkey
+    app.kubernetes.io/component: middleware
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+type: Opaque
+data:
+  username: {{ "default" | b64enc }}
+  {{- if $existingSecret }}
+  # Preserve the existing password across `helm upgrade` -- only generated
+  # once, on first install, never rotated by this chart afterwards.
+  password: {{ index $existingSecret.data "password" }}
+  {{- else }}
+  password: {{ randAlphaNum 32 | b64enc }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: valkey.datapower.ibm.com/v1beta2
+kind: Valkey
+metadata:
+  name: valkey
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: valkey
+    app.kubernetes.io/component: middleware
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  kubernetesConfig:
+    image: "{{ .Values.global.imageRegistry }}/{{ .Values.valkey.image }}"
+    imagePullPolicy: "Always"
+    {{- include "idig.imagePullSecrets" . | nindent 4 }}
+    valkeySecret:
+      name: {{ .Values.valkey.credentialSecretName | quote }}
+      key: "password"
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Delete
+      whenScaled: Retain
+  TLS:
+    ca: "ca.crt"
+    cert: "tls.crt"
+    key: "tls.key"
+    secret:
+      secretName: {{ .Values.valkey.tlsSecretName | quote }}
+{{- end }}

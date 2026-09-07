@@ -1,0 +1,27 @@
+# Large vendor binaries / downloads -- never commit these to git.
+# Fetch them fresh per environment (image-tool tarball, signature bundles,
+# extracted OCI/PPA payloads) rather than versioning them.
+/binaries/
+*.tar
+*.tar.gz
+*.zip
+
+# Vendor release drop (IBM release_files.zip contents) -- local reference
+# input only, not versioned. See AGENTS.md for how to obtain it.
+/idig-operator-release-files_*/
+
+# Helm
+# Note: charts/idig/charts/idig-crds/ IS versioned (it's a real sub-chart
+# with its own CRDs, not a fetched dependency) -- only the packaged .tgz
+# `helm dependency build` produces alongside it is generated/ignored.
+*.tgz
+
+# OS / editor cruft
+.DS_Store
+
+CONTEXT.md
+
+.env
+
+.bob
+.claude

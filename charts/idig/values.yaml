@@ -1,0 +1,296 @@
+# =============================================================================
+# IBM DataPower Interact Gateway (IDIG) -- Helm Chart Values
+# =============================================================================
+# This file documents every configurable parameter.
+# Override per environment using examples/values-dev.yaml or
+# examples/values-prod.yaml as a starting point.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Deployment control (wave-based deployment)
+# -----------------------------------------------------------------------------
+deployment:
+  # REQUIRED: Specifies which deployment wave to execute.
+  # Valid values: "0", "1", "2", "3", "all"
+  # - "0": IDIG's cert-manager Issuer/CA/Certificates (requires cert-manager
+  #        to already be present on the cluster -- see chart README
+  #        "Prerequisites"; the Gateway API CRDs are installed by this
+  #        chart's idig-crds sub-chart, no separate step needed)
+  # - "1": All operators (APIC, NanoGateway, Valkey, IDIG NanoGateway, IDIG
+  #        operator + their CRDs). Grouped in one wave because none of them
+  #        depend on each other or on Valkey/the IDIG CR at startup -- they
+  #        are standard controllers that just watch for CRs to reconcile.
+  # - "2": Valkey instance (the Valkey custom resource)
+  # - "3": IDIG cluster (the DatapowerInteractGatewayCluster custom
+  #        resource) -- this is what actually needs the IDIG operator
+  #        (wave 1) and Valkey (wave 2) up and ready first
+  # - "all": Everything, with ArgoCD sync-wave annotations (GitOps mode)
+  #
+  # Usage examples:
+  #   helm install idig-prereqs .   -f values-dev.yaml --set deployment.wave=0
+  #   helm install idig-operators . -f values-dev.yaml --set deployment.wave=1
+  #   helm install idig-valkey .    -f values-dev.yaml --set deployment.wave=2
+  #   helm install idig-cluster .   -f values-dev.yaml --set deployment.wave=3
+  wave: ""  # Must be explicitly set - no default to prevent accidental full deployment
+
+# -----------------------------------------------------------------------------
+# Sub-chart CRD toggles
+# -----------------------------------------------------------------------------
+# idig-crds: mandatory CRDs (IDIG operator, NanoGateway, Valkey).
+# Never disable unless you are absolutely sure these CRDs already exist.
+idig-crds:
+  enabled: true
+
+# idig-crds-vendor: CRDs that may be owned by another operator on the cluster:
+#   - Gateway API CRDs  → owned by the OpenShift Ingress Operator on OCP 4.x
+#   - APIC CRDs         → owned by OLM when API Connect is already installed
+# Set to false on OCP or any cluster where these CRDs are already managed
+# externally. Set to true on vanilla Kubernetes with no pre-existing APIC.
+idig-crds-vendor:
+  enabled: true
+
+# -----------------------------------------------------------------------------
+# Global / shared settings
+# -----------------------------------------------------------------------------
+global:
+  # Target namespace for all IDIG resources (operators + cluster).
+  namespace: idig
+
+  # Operator installation scope.
+  #
+  # ONLY "singleNamespace" is implemented today: every operator gets a
+  # namespace-scoped ServiceAccount/Role/RoleBinding (plus the handful of
+  # ClusterRole/ClusterRoleBinding the vendor operators themselves require)
+  # and watches only `global.namespace`.
+  #
+  # "clusterWide" (watch-all-namespaces, OLM AllNamespaces-style) is a
+  # planned future mode, NOT implemented -- setting it fails the render on
+  # purpose rather than silently behaving like singleNamespace or half-working.
+  operatorScope: singleNamespace
+
+  # Image pull secret name(s). Both must exist in the namespace before
+  # deployment if set (see chart README "Prerequisites").
+  #
+  # imagePullSecret: credentials for global.imageRegistry. REQUIRED whenever
+  # global.imageRegistry is set (the chart fails the render otherwise),
+  # including for the OpenShift internal registry in the same namespace. See
+  # examples/values-ocp.yaml for how to create one. Leave empty only when
+  # global.imageRegistry is also empty.
+  imagePullSecret: ""
+
+  # ibm-entitlement-key: IBM entitlement key, needed to pull some IDIG
+  # images directly from cp.icr.io if you're not mirroring everything.
+  # Leave empty to skip (same-namespace/no-entitlement-key scenarios).
+  ibmEntitlementKeySecret: ibm-entitlement-key
+
+  # Container image registry for all IDIG/APIC/NanoGateway/Valkey images.
+  # Point this at your mirrored registry (see scripts/mirror-images.sh) or at
+  # cp.icr.io/cp/datapower if pulling directly from IBM.
+  imageRegistry: ""
+
+  # ibm-apiconnect operator image (used by the apic operator + its webhook
+  # init containers). Pin to the sha256 digest from the vendor bundle
+  # (idig-operator-release-files_12.1.1.2/dependencies/ibm-apiconnect.yaml)
+  # -- do not replace with a tag-named image or a custom build.
+  apiconnectOperatorImage: "ibm-apiconnect-operator@sha256:f026e8024f32366a6830040ea48a17547b5d4354302234dfd767be22b0cfce06"
+
+  # Base domain for all ingress endpoints (e.g. apps.<cluster-domain>).
+  domain: ""
+
+  # Default storage class for persistent volumes. Empty = cluster default.
+  storageClass: ""
+
+  # The vendor manifests hardcode a nodeAffinity requiring
+  # kubernetes.io/arch=amd64 (occasionally amd64/s390x/ppc64le) on several
+  # operator Deployments, since IBM only builds/tests these images for
+  # amd64. Set to false to drop that affinity -- useful for local dev/test
+  # clusters on non-amd64 hosts (e.g. Apple Silicon) where the container
+  # runtime transparently translates amd64 images (Podman's Rosetta
+  # support, QEMU binfmt, etc.). Leave true for any real target
+  # environment -- this does not change which image variant gets pulled,
+  # only whether Kubernetes is allowed to schedule the (still amd64-only)
+  # image onto a non-amd64-labeled node.
+  enforceAmd64NodeAffinity: true
+
+  # IBM License configuration (see https://ibm.biz/apiclicensing).
+  license:
+    accept: false
+    use: nonproduction   # "nonproduction" or "production"
+    id: L-PAZT-LQ5TZL
+    metric: PROCESSOR_VALUE_UNIT
+
+# -----------------------------------------------------------------------------
+# Wave 0 -- IDIG's own cert-manager Issuer/Certificates
+# -----------------------------------------------------------------------------
+# cert-manager itself and the Gateway API CRDs are NOT installed by this
+# chart -- they are cluster-wide infra shared by potentially many products
+# and are expected to already be present on the cluster (see chart README
+# "Prerequisites"). This chart only creates the IDIG-specific Issuer/CA and
+# application Certificates that depend on cert-manager being available.
+#
+# Split in two independent template files on purpose:
+#   wave0-issuers.yaml      -- the trust chain (selfsigning-issuer,
+#                               ingress-ca, ingress-issuer)
+#   wave0-certificates.yaml -- the application leaf Certificates that
+#                               consume issuer.name/kind below
+# so that switching to a cluster-level issuer later (e.g. a company PKI
+# ClusterIssuer) only ever means changing issuer.* -- the certificates file
+# does not need to change.
+issuer:
+  # Set to false if you already manage your own cert-manager
+  # Issuer/ClusterIssuer and don't want this chart to create
+  # selfsigning-issuer/ingress-ca/ingress-issuer at all.
+  createSelfSigned: true
+
+  # Issuer that every IDIG application Certificate (wave0-certificates.yaml)
+  # is issued from. Defaults to the self-signed "ingress-issuer" created
+  # above. To use a cluster-wide issuer instead: set createSelfSigned to
+  # false and point name/kind at your own ClusterIssuer -- no other change
+  # needed anywhere else in this chart.
+  name: ingress-issuer
+  kind: Issuer   # "Issuer" or "ClusterIssuer"
+
+  # Issuer passed to the IDIG operator via spec.certManagerIssuer (wave 3),
+  # which the operator uses to sign its own internal idig-ca. Left empty by
+  # default so the operator falls back to its own default issuer
+  # (apic-self-signed-issuer -- a single self-signed CA). Do NOT default
+  # this to issuer.name/ingress-issuer above: chaining idig-ca through that
+  # 2-level trust chain (ingress-ca -> ingress-issuer -> idig-ca) breaks
+  # mTLS on idig-analytics-proxy, which only loads its CA bundle's leaf
+  # cert (ca/tls.crt) and not the full chain (ca/ca.crt) -- so it can't
+  # verify any client cert once idig-ca itself isn't a self-signed root.
+  # Only set this if you know the operator's own default doesn't fit your
+  # cluster's PKI requirements.
+  certManagerIssuer:
+    name: ""
+    kind: Issuer
+
+# Envoy Gateway itself (the controller/CRDs install from
+# https://github.com/envoyproxy/gateway/releases/download/v1.7.0/install.yaml)
+# is NOT installed by this chart -- same treatment as cert-manager, see
+# chart README "Prerequisites". This chart only creates the IDIG-specific
+# configuration on top of an already-installed Envoy Gateway: the
+# EnvoyProxy (with mergeGateways + TLS 1.3 backend config) and the
+# GatewayClass IDIG's own Gateway/HTTPRoute resources are expected to use.
+# (The envoy-gateway-config ConfigMap's Backend-CR-enable patch stays a
+# manual prerequisite step -- see chart README -- since that object always
+# pre-exists from Envoy Gateway's own install and Helm cannot adopt a
+# pre-existing object without ownership annotations already set on it.)
+#
+# Kubernetes only -- has no OpenShift equivalent. On OCP, IDIG exposes its
+# endpoints via plain Route objects instead of Gateway API; set enabled to
+# false there (see chart README "Prerequisites" -> OpenShift-only).
+envoyGateway:
+  enabled: true
+
+  # Namespace Envoy Gateway itself was installed into (its own install
+  # manifest always uses this namespace, not global.namespace).
+  namespace: envoy-gateway-system
+
+  # Name shared by the EnvoyProxy resource and referenced by the
+  # GatewayClass's parametersRef -- IDIG's docs use "custom-proxy-config"
+  # specifically, not an arbitrary name, so this isn't meant to vary.
+  proxyConfigName: custom-proxy-config
+
+  # Name of the GatewayClass IDIG's Gateway resources reference.
+  gatewayClassName: envoy
+
+  # Optional node selector for the Envoy proxy pods (vendor example pins to
+  # control-plane nodes, but the control-plane label's value is distro-
+  # specific -- "" on kubeadm, "true" on k3s -- so default to {} and let
+  # the scheduler decide; set explicitly per-cluster if pinning is needed).
+  nodeSelector: {}
+
+# -----------------------------------------------------------------------------
+# Wave 1 -- All operators (APIC, NanoGateway, Valkey, IDIG NanoGateway, IDIG)
+# -----------------------------------------------------------------------------
+apicOperator:
+  enabled: true
+  # Deployment/Service/Role/etc. names come from the vendor manifest as-is;
+  # nothing to override here today beyond enabled/imageRegistry.
+
+nanogatewayOperator:
+  enabled: true
+
+valkeyOperator:
+  enabled: true
+
+idigNanoGatewayOperator:
+  enabled: true
+  image: "idig-gw-operator:12.1.1.0.29-20260826083315"
+
+idigOperator:
+  enabled: true
+  image: "idig-operator:op.1.0.1.g.9c642fe.b.master.n.307"
+
+# -----------------------------------------------------------------------------
+# Wave 2 -- Valkey instance
+# -----------------------------------------------------------------------------
+valkey:
+  enabled: true
+  image: "valkey:8.1.4"
+  tlsSecretName: valkey-tls
+  credentialSecretName: valkey-secret
+  # valkey-tls is generated by cert-manager in wave 0 (see
+  # wave0-certificates.yaml), issued by issuer.name/issuer.kind above like
+  # every other cert in this chart.
+  # valkey-secret (username/password for Valkey auth) is auto-generated by
+  # this chart in wave 2 when autoGenerateSecret=true (the default) -- a
+  # random password, preserved across `helm upgrade` (not rotated). Unlike
+  # the registry/entitlement-key/WatsonX secrets (external systems this
+  # chart doesn't control), Valkey is entirely internal to this
+  # deployment, so there's no reason to make this one a manual step. Set to
+  # false to manage this secret yourself instead (e.g. via an external
+  # secrets manager) -- then pre-create it before wave 2 runs.
+  autoGenerateSecret: true
+
+# -----------------------------------------------------------------------------
+# Wave 3 -- IDIG cluster (DatapowerInteractGatewayCluster CR)
+# -----------------------------------------------------------------------------
+idigCluster:
+  enabled: true
+  name: idig
+
+  # "dev" (minimal resources) or "prod" (high availability). See
+  # samples/idig-cluster-dev.yaml / idig-cluster-prod.yaml in the vendor
+  # release bundle for the profile this maps to.
+  profile: dev
+
+  enableAnalytics: false
+  enableDevPortal: true
+
+  tenantName: ""
+  groupName: ""
+
+  # Name of a pre-created secret with WATSONX_API_KEY / WATSONX_PROJECT_ID.
+  # Leave empty to skip the GenAI service (all other IDIG services still work).
+  watsonxSecret: ""
+
+  # Optional: name of a pre-created kubernetes.io/tls secret
+  # (tls.crt/tls.key/ca.crt) to use for IDIG Gateway HTTPRoutes instead of
+  # cert-manager auto-generated certificates.
+  customIngressCertificate: ""
+
+  # The cert-manager issuer used by the IDIG operator to generate its
+  # internal service certificates (only relevant when microServiceSecurity
+  # is "certManager", the operator's own default -- see CRD schema) is
+  # `issuer.name` / `issuer.kind` above -- not repeated here, so there is a
+  # single point of truth when switching issuers.
+
+  # RFC 2253 subject DN of the client certificate used for mTLS with the
+  # Analytics ingestion endpoint. Required when enableAnalytics: true — the
+  # admission webhook validates this field on every CR create/update (including
+  # spec.version upgrades). Format MUST be CN=...,O=... (CN before O — the
+  # reversed order O=...,CN=... present in the 12.1.1.0 sample was incorrect
+  # and is rejected by the webhook since 12.1.1.2).
+  analyticsSettings:
+    clientSubjectDN: "CN=analytics-ingestion-client,O=cert-manager"
+
+  analyticsStorage:
+    type: shared
+    volumeSize: 200Gi
+    storageClass: ""  # empty = inherits global.storageClass
+
+  devPortalStorage:
+    volumeSize: 200Gi
+    storageClass: ""  # empty = inherits global.storageClass

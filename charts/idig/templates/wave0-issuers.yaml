@@ -1,0 +1,84 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.issuer.createSelfSigned (or (eq $wave "0") (eq $wave "all")) }}
+# Wave 0 -- Trust chain: self-signed root CA + the Issuer every IDIG
+# application Certificate (wave0-certificates.yaml) is issued from.
+# Adapted from the vendor helper_files/ingress-issuer-v1.yaml: only
+# difference from the vendor file is an explicit `namespace:` on every
+# object (the vendor file relies on `kubectl apply -n <namespace>`, which
+# Helm does not implicitly apply the same way to every object) and standard
+# chart labels/sync-wave annotations.
+# Requires cert-manager to already be installed and Available on the
+# cluster (see chart README "Prerequisites") -- not installed by this chart.
+#
+# To use a cluster-level issuer (e.g. a company PKI ClusterIssuer) instead
+# of this self-signed chain: set issuer.createSelfSigned=false and point
+# issuer.name/issuer.kind at your own Issuer/ClusterIssuer -- this is the
+# only file that needs to change; wave0-certificates.yaml and
+# idigCluster's certManagerIssuer wiring (wave3-idig-cluster.yaml) both
+# already read from issuer.name/issuer.kind, not a hardcoded name.
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigning-issuer
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: selfsigning-issuer
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ingress-ca
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: ingress-ca
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  duration: 87600h # 10 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretName: ingress-ca
+  commonName: "ingress-ca"
+  usages:
+  - digital signature
+  - key encipherment
+  - cert sign
+  isCA: true
+  issuerRef:
+    name: selfsigning-issuer
+    kind: Issuer
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: ingress-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.issuer.name }}
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: {{ .Values.issuer.name }}
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  ca:
+    secretName: ingress-ca
+{{- end }}

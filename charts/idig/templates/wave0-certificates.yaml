@@ -1,0 +1,302 @@
+{{- $wave := include "idig.wave" . }}
+{{- if or (eq $wave "0") (eq $wave "all") }}
+# Wave 0 -- Application leaf Certificates for IDIG's internal mTLS.
+# All issued from `issuer.name`/`issuer.kind` (see values.yaml) -- switching
+# to a cluster-level issuer only ever means changing those two values in
+# wave0-issuers.yaml, not this file.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: portal-admin-client
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: portal-admin-client
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+    - cert-manager
+  commonName: portal-admin-client
+  secretName: portal-admin-client
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+  - "client auth"
+  - "signing"
+  - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: portal-admin-client
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-client-client
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: gateway-client-client
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+    - cert-manager
+  commonName: gateway-client-client
+  secretName: gateway-client-client
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+  - "client auth"
+  - "signing"
+  - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: gateway-client-client
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: analytics-ingestion-client
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: analytics-ingestion-client
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+    - cert-manager
+  commonName: analytics-ingestion-client
+  secretName: analytics-ingestion-client
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+  - "client auth"
+  - "signing"
+  - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: analytics-ingestion-client
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-service
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: gatewaycluster
+    app.kubernetes.io/instance: gatewaycluster
+    app.kubernetes.io/name: gateway-service
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+    - cert-manager
+  commonName: gateway-service
+  secretName: gateway-service
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+  - "client auth"
+  - "signing"
+  - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: gatewaycluster
+      app.kubernetes.io/instance: gatewaycluster
+      app.kubernetes.io/name: gateway-service
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-peering
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: gatewaycluster
+    app.kubernetes.io/instance: gatewaycluster
+    app.kubernetes.io/name: gateway-peering
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+    - cert-manager
+  commonName: gateway-peering
+  secretName: gateway-peering
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+  - "server auth"
+  - "client auth"
+  - "signing"
+  - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: gatewaycluster
+      app.kubernetes.io/instance: gatewaycluster
+      app.kubernetes.io/name: gateway-peering
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: devportal-admin-client
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: devportal-admin-client
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+      - cert-manager
+  commonName: devportal-admin-client
+  secretName: devportal-admin-client
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+    - "client auth"
+    - "signing"
+    - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: devportal-admin-client
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nano-gateway-mgmt-client
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: management
+    app.kubernetes.io/instance: management
+    app.kubernetes.io/name: nano-gateway-mgmt-client
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+      - cert-manager
+  commonName: nano-gateway-mgmt-client
+  secretName: nano-gateway-mgmt-client
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+    - "client auth"
+    - "signing"
+    - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: management
+      app.kubernetes.io/instance: management
+      app.kubernetes.io/name: nano-gateway-mgmt-client
+---
+# Valkey server certificate, produces a secret with ca.crt/tls.crt/tls.key,
+# exactly what the Valkey CR's spec.TLS expects (see wave2-valkey-instance.yaml).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.valkey.tlsSecretName }}
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/component: middleware
+    app.kubernetes.io/instance: valkey
+    app.kubernetes.io/name: {{ .Values.valkey.tlsSecretName }}
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  subject:
+    organizations:
+      - cert-manager
+  commonName: {{ printf "valkey.%s.svc.cluster.local" (include "idig.namespace" .) }}
+  dnsNames:
+    - {{ printf "valkey.%s.svc.cluster.local" (include "idig.namespace" .) }}
+    - {{ printf "valkey.%s.svc" (include "idig.namespace" .) }}
+  secretName: {{ .Values.valkey.tlsSecretName }}
+  issuerRef:
+    name: {{ .Values.issuer.name }}
+    kind: {{ .Values.issuer.kind }}
+  usages:
+    - "server auth"
+    - "client auth"
+    - "signing"
+    - "key encipherment"
+  duration: 17520h # 2 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    rotationPolicy: Always
+    encoding: PKCS8
+  secretTemplate:
+    labels:
+      app.kubernetes.io/component: middleware
+      app.kubernetes.io/instance: valkey
+      app.kubernetes.io/name: {{ .Values.valkey.tlsSecretName }}
+{{- end }}

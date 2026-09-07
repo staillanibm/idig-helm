@@ -1,0 +1,13 @@
+apiVersion: v2
+name: idig-crds-vendor
+description: >
+  Vendor-managed CRDs that may already exist on the target cluster and must
+  NOT be re-applied in that case: Gateway API CRDs (owned by the OpenShift
+  Ingress Operator on OCP) and APIC CRDs (owned by OLM when API Connect is
+  already installed). Packaged as a separate sub-chart so it can be disabled
+  independently via `idig-crds-vendor.enabled: false` without affecting the
+  mandatory IDIG/NanoGateway/Valkey CRDs in the `idig-crds` sub-chart.
+  Set enabled: false on any cluster where these CRDs are already managed by
+  another operator (OpenShift Ingress Operator, OLM catalog).
+type: application
+version: 0.1.0

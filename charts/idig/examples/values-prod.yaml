@@ -1,0 +1,28 @@
+# Production profile -- high availability, Analytics enabled.
+# Maps to the vendor bundle's samples/idig-cluster-prod.yaml.
+#
+# Usage:
+#   helm upgrade --install idig-operators charts/idig -f charts/idig/examples/values-prod.yaml \
+#     --set deployment.wave=1 -n idig --create-namespace
+
+global:
+  namespace: idig
+  imageRegistry: ""   # REQUIRED: set to your mirrored registry (see scripts/mirror-images.sh)
+  domain: ""           # REQUIRED: base domain for ingress endpoints
+  storageClass: ""      # RECOMMENDED for prod: pin an explicit storage class
+  license:
+    accept: false       # REQUIRED: set to true to accept the IBM license
+    use: production
+
+idigCluster:
+  profile: prod
+  enableAnalytics: true
+  enableDevPortal: true
+  tenantName: "acme"
+  groupName: "production"
+  # Required when enableAnalytics: true — the admission webhook validates this on every
+  # CR create/update (including spec.version upgrades). RFC 2253 format, CN before O.
+  analyticsSettings:
+    clientSubjectDN: "CN=analytics-ingestion-client,O=cert-manager"
+  analyticsStorage:
+    volumeSize: 200Gi

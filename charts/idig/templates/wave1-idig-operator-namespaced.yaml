@@ -1,0 +1,376 @@
+{{- $wave := include "idig.wave" . }}
+{{- if and .Values.idigOperator.enabled (or (eq $wave "1") (eq $wave "all")) }}
+{{- include "idig.validateOperatorScope" . }}
+{{- include "idig.validateImagePullSecret" . }}
+# Wave 1 -- IDIG operator: namespace-scoped RBAC + Deployment. No
+# dependency on Valkey/the IDIG cluster CR at startup -- a standard
+# controller waiting for CRs, safe to start alongside every other operator.
+# Cluster-scoped RBAC for this operator lives in
+# wave1-idig-operator-clusterwide.yaml -- kept separate so a future
+# clusterWide operatorScope mode can swap/extend only that file.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: idig-operator-controller-manager
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: idig-operator-manager-role
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - pods
+  - secrets
+  - serviceaccounts
+  - services
+  - services/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - resourcequotas
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificaterequests
+  - certificates
+  - issuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oidc.security.ibm.com
+  resources:
+  - clients
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
+  verbs:
+  - bind
+  - create
+  - delete
+  - escalate
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  - routes/custom-host
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: idig-operator-manager-rolebinding
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: idig-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: idig-operator-controller-manager
+  namespace: {{ include "idig.namespace" . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idig-operator
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/name: idig-operator
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: idig-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: idig-operator
+    spec:
+      initContainers:
+      - name: webhook-delete
+        args:
+        - webhook-delete
+        command:
+        - /entrypoint.sh
+        - /manager
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.idigOperator.image }}"
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 75m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+      - name: webhook-init
+        args:
+        - webhook-init
+        command:
+        - /entrypoint.sh
+        - /manager
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MUTATING_WEBHOOK
+          value: idig-operator-mutating-webhook-configuration
+        - name: VALIDATING_WEBHOOK
+          value: idig-operator-validating-webhook-configuration
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.idigOperator.image }}"
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 75m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: false
+      containers:
+      - name: manager
+        args:
+        - --leader-elect
+        command:
+        - /entrypoint.sh
+        - /manager
+        env:
+        # WATCH_NAMESPACE pinned to this operator's own namespace --
+        # single-namespace scope. A future clusterWide operatorScope would
+        # need this env var omitted/emptied instead (most operators built
+        # with operator-sdk/kubebuilder treat an empty WATCH_NAMESPACE as
+        # "watch all namespaces") -- verify against the operator's actual
+        # behavior before implementing that mode.
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: OPERATOR_MODE
+          value: idig
+        - name: ENABLE_WEBHOOKS
+          value: "true"
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.idigOperator.image }}"
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: probes
+        ports:
+        - containerPort: 8082
+          name: metrics
+        - containerPort: 8083
+          name: probes
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: probes
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      {{- include "idig.imagePullSecrets" . | nindent 6 }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: idig-operator-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - emptyDir: {}
+        name: cert
+{{- end }}
