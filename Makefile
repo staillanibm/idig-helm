@@ -42,6 +42,7 @@ help:
 	@echo "  make deploy PLATFORM=k8s|ocp     Run check-values + prereqs + secrets + all 4 waves in order"
 	@echo "  make upgrade                     Re-apply wave 1 and wave 3 (see charts/idig/README.md Upgrading)"
 	@echo "  make uninstall                   helm uninstall all 4 releases, reverse order"
+	@echo "  make force-uninstall CONFIRM=yes  Force-delete namespace + its ClusterRoles/ClusterRoleBindings (keeps CRDs, cert-manager config)"
 	@echo "  make info PLATFORM=k8s|ocp       Print IDIG console + Dev Portal URLs and admin credentials"
 	@echo ""
 	@echo "Variables (override on the command line):"
@@ -158,6 +159,12 @@ envoy-gateway-enable-backend:
 cert-manager-ocp:
 	@echo "▶ cert-manager Operator for Red Hat OpenShift (OLM)"
 	oc apply -f hack/cert-manager-ocp-subscription.yaml
+	@if [ -z "$$(oc get operatorgroup -n cert-manager-operator -o name 2>/dev/null)" ]; then \
+	  echo "  no OperatorGroup in cert-manager-operator yet -- creating ours"; \
+	  oc apply -f hack/cert-manager-ocp-operatorgroup.yaml; \
+	else \
+	  echo "  an OperatorGroup already exists in cert-manager-operator (e.g. one auto-created by the OpenShift Console on initial operator install) -- leaving it alone, OLM allows only one per namespace and a second one causes the CSV to fail with 'TooManyOperatorGroups'"; \
+	fi
 	@echo "⏳ Waiting for the CSV to reach Succeeded (see charts/idig/README.md's OperatorDependencyNotInstalled note on failure)"
 	@for i in $$(seq 1 30); do \
 	  phase=$$(oc get csv -n cert-manager-operator -o jsonpath='{.items[0].status.phase}' 2>/dev/null || echo ""); \
@@ -312,6 +319,78 @@ uninstall:
 	helm uninstall idig-valkey -n $(NAMESPACE) || true
 	helm uninstall idig-operators -n $(NAMESPACE) || true
 	helm uninstall idig-prereqs -n $(NAMESPACE) || true
+
+# -----------------------------------------------------------------------------
+# force-uninstall: last-resort teardown when 'uninstall' can't finish cleanly
+# (e.g. a namespace stuck Terminating on a CR finalizer whose operator is
+# already gone, or ClusterRoles/ClusterRoleBindings left behind with stale
+# meta.helm.sh/release-namespace ownership after a namespace rename/move --
+# both hit while installing this chart, see git history around 2026-09-09).
+# Webhook configs are deleted FIRST, before touching any CR: once namespace
+# deletion starts, the operator pods/services backing those webhooks are
+# torn down before their CRs are, so any later patch/delete on a CR (even
+# just to strip its finalizer) hangs on a webhook with failurePolicy=Fail
+# pointing at a service that's already gone -- a circular deadlock.
+# Deliberately narrow otherwise: only strips finalizers from custom
+# resources in $(NAMESPACE), force-deletes the namespace, and removes
+# ClusterRoles/ClusterRoleBindings annotated as owned by this
+# release+namespace. Leaves CRDs, cert-manager (Operator/Issuer/etc.), and
+# any other namespace alone.
+# -----------------------------------------------------------------------------
+
+.PHONY: force-uninstall
+force-uninstall:
+	@echo "▶ Force-uninstall: namespace $(NAMESPACE) + its ClusterRoles/ClusterRoleBindings (CRDs and cert-manager config are left alone)"
+	@if [ "$(CONFIRM)" != "yes" ]; then \
+	  echo "✗ This force-deletes namespace '$(NAMESPACE)' and any ClusterRole/ClusterRoleBinding owned by a Helm release in it." >&2; \
+	  echo "  Re-run with CONFIRM=yes to proceed: make force-uninstall NAMESPACE=$(NAMESPACE) CONFIRM=yes" >&2; \
+	  exit 1; \
+	fi
+	@echo "▶ Removing webhook configs pointing at $(NAMESPACE) (must happen before touching any CR, or finalizer/delete calls hang on a dead webhook target)"
+	@for kind in validatingwebhookconfiguration mutatingwebhookconfiguration; do \
+	  kubectl get $$kind -o json 2>/dev/null | jq -r --arg ns "$(NAMESPACE)" \
+	    '.items[] | select(any(.webhooks[]?; .clientConfig.service.namespace == $$ns)) | .metadata.name' | \
+	  sort -u | \
+	  while read -r name; do \
+	    [ -n "$$name" ] && { echo "  deleting $$kind/$$name"; kubectl delete $$kind "$$name" --ignore-not-found; }; \
+	  done; \
+	done
+	@echo "▶ Stripping finalizers from this chart's custom resources still in $(NAMESPACE) (namespace deletion hangs otherwise if their operator is gone)"
+	@for gvk in $$(kubectl get crd -o json 2>/dev/null | jq -r \
+	    '.items[] | select(.spec.group | test("ibm\\.com$$|valkey")) | "\(.spec.names.plural).\(.spec.group)"'); do \
+	  for name in $$(kubectl get "$$gvk" -n $(NAMESPACE) -o name 2>/dev/null); do \
+	    echo "  clearing finalizers on $$gvk/$$name"; \
+	    kubectl patch "$$name" -n $(NAMESPACE) --type=merge -p '{"metadata":{"finalizers":[]}}' >/dev/null 2>&1 || true; \
+	  done; \
+	done
+	@echo "▶ Deleting namespace $(NAMESPACE)"
+	kubectl delete namespace $(NAMESPACE) --wait=false --ignore-not-found
+	@echo "⏳ Waiting for namespace $(NAMESPACE) to finish terminating (re-stripping finalizers each poll -- a CR can still be finalizing, or re-add its finalizer via a reconcile/webhook race, after deletion has already started)"
+	@for i in $$(seq 1 30); do \
+	  kubectl get namespace $(NAMESPACE) >/dev/null 2>&1 || { echo "✓ Namespace $(NAMESPACE) deleted."; break; }; \
+	  for gvk in $$(kubectl get crd -o json 2>/dev/null | jq -r \
+	      '.items[] | select(.spec.group | test("ibm\\.com$$|valkey")) | "\(.spec.names.plural).\(.spec.group)"'); do \
+	    for name in $$(kubectl get "$$gvk" -n $(NAMESPACE) -o name 2>/dev/null); do \
+	      echo "  clearing finalizers on $$gvk/$$name"; \
+	      kubectl patch "$$name" -n $(NAMESPACE) --type=merge -p '{"metadata":{"finalizers":[]}}' >/dev/null 2>&1 || true; \
+	    done; \
+	  done; \
+	  if [ "$$i" = "30" ]; then \
+	    echo "⚠ Namespace still terminating after 5 minutes -- checking for a stuck finalizer on the namespace itself:"; \
+	    kubectl get namespace $(NAMESPACE) -o jsonpath='{.status.conditions}' 2>/dev/null; echo; \
+	    echo "  If it's blocked by a webhook/CR finalizer, delete the offending ValidatingWebhookConfiguration/MutatingWebhookConfiguration or re-run this target."; \
+	  fi; \
+	  sleep 10; \
+	done
+	@echo "▶ Removing ClusterRoles/ClusterRoleBindings owned by a Helm release in $(NAMESPACE) (leaves CRDs and everything else untouched; webhook configs were already handled above)"
+	@for kind in clusterrole clusterrolebinding; do \
+	  kubectl get $$kind -o json 2>/dev/null | jq -r --arg ns "$(NAMESPACE)" \
+	    '.items[] | select(.metadata.annotations["meta.helm.sh/release-namespace"] == $$ns) | .metadata.name' | \
+	  while read -r name; do \
+	    [ -n "$$name" ] && { echo "  deleting $$kind/$$name"; kubectl delete $$kind "$$name" --ignore-not-found; }; \
+	  done; \
+	done
+	@echo "✓ force-uninstall complete. CRDs and cert-manager (Operator/Issuer/subscription) were left untouched."
 
 # -----------------------------------------------------------------------------
 # info: URLs + admin credentials for the IDIG console and Dev Portal

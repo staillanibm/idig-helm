@@ -1,0 +1,35 @@
+# Production profile -- high availability, Analytics enabled.
+# Maps to the vendor bundle's samples/idig-cluster-prod.yaml.
+#
+# Usage:
+#   helm upgrade --install idig-operators charts/idig -f charts/idig/examples/values-prod.yaml \
+#     --set deployment.wave=1 -n idig --create-namespace
+
+global:
+  namespace: idig
+  imageRegistry: "quay-quay-quay.apps.itz-mps0y7.hub04-lb.techzone.ibm.com/idig"
+  imagePullSecret: "idig-registry-secret"
+  domain: "apps.sttlab.eu"
+  license:
+    accept: true
+    use: production
+idigCluster:
+  profile: prod
+  enableAnalytics: true
+  enableDevPortal: true
+  tenantName: "idig"
+  groupName: "production"
+  analyticsStorage:
+    volumeSize: 100Gi
+  devPortalStorage:
+    volumeSize: 20Gi
+  customIngressCertificate: "apps-sttlab-eu-tls"
+  nanoGateway:
+    gatewayDomain: "nanogw.sttlab.eu"
+envoyGateway:
+  enabled: false
+idig-crds-vendor:
+  enabled: false 
+idigOperator:
+  enabled: true
+  image: "idig-operator:op.1.0.1.g.53aec8c.b.v12112ifix1am3536.n.21@sha256:b810c3bfd491d3593cee507fc209e8de4a5da62e2947ad90e5877075939ffc60"

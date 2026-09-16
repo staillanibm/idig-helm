@@ -271,6 +271,28 @@ idigCluster:
   # cert-manager auto-generated certificates.
   customIngressCertificate: ""
 
+  # Optional: pre-created kubernetes.io/tls secrets to use instead of
+  # cert-manager auto-generated certificates for the CR's own internal
+  # PKI slots (spec.customCertificates on DatapowerInteractGatewayCluster).
+  # name must be exactly one of: caCertificate, serverCertificate,
+  # clientCertificate. Leave secretName empty to skip that slot (chart
+  # default: cert-manager auto-generates it via apic-self-signed-issuer /
+  # issuer.certManagerIssuer). Each non-empty entry is rendered as one
+  # {name, secretName} list item.
+  customCertificates:
+    caCertificate: ""
+    serverCertificate: ""
+    clientCertificate: ""
+
+  nanoGateway:
+    # Base domain for the NanoGateway wildcard route (MCP servers / LLM
+    # proxies), i.e. spec.nanoGateway.gatewayDomain on the
+    # DatapowerInteractGatewayCluster CR. Empty = chart default
+    # "nanogw.<global.domain>". Set to global.domain itself (no "nanogw."
+    # prefix) if the route must fall under an existing wildcard cert's SAN
+    # that only covers *.<global.domain> (one label deep).
+    gatewayDomain: ""
+
   # The cert-manager issuer used by the IDIG operator to generate its
   # internal service certificates (only relevant when microServiceSecurity
   # is "certManager", the operator's own default -- see CRD schema) is

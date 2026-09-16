@@ -50,6 +50,23 @@ spec:
   customIngressCertificate: {{ .Values.idigCluster.customIngressCertificate | quote }}
   {{- end }}
 
+  {{- $cc := .Values.idigCluster.customCertificates }}
+  {{- if or $cc.caCertificate $cc.serverCertificate $cc.clientCertificate }}
+  customCertificates:
+  {{- if $cc.caCertificate }}
+  - name: caCertificate
+    secretName: {{ $cc.caCertificate | quote }}
+  {{- end }}
+  {{- if $cc.serverCertificate }}
+  - name: serverCertificate
+    secretName: {{ $cc.serverCertificate | quote }}
+  {{- end }}
+  {{- if $cc.clientCertificate }}
+  - name: clientCertificate
+    secretName: {{ $cc.clientCertificate | quote }}
+  {{- end }}
+  {{- end }}
+
   {{- if .Values.issuer.certManagerIssuer.name }}
   certManagerIssuer:
     name: {{ .Values.issuer.certManagerIssuer.name | quote }}
@@ -97,5 +114,5 @@ spec:
   # NanoGateway configuration is handled by the profile template.
   # To customize NanoGateway settings, patch the NanoGatewayCluster CR after creation.
   nanoGateway:
-    gatewayDomain: {{ printf "nanogw.%s" .Values.global.domain }}
+    gatewayDomain: {{ .Values.idigCluster.nanoGateway.gatewayDomain | default (printf "nanogw.%s" .Values.global.domain) }}
 {{- end }}
