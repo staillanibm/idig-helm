@@ -48,7 +48,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'AnalyticsBackup is the Schema for the analyticsbackups API.
-          For more info on Analytics backups, visit: https://ibm.biz/BdPJjt'
+          For more info on Analytics backups, visit: https://ibm.biz/~0wpitvXhs'
         properties:
           apiVersion:
             description: |-
@@ -806,7 +806,7 @@ spec:
                       storage is recommended for best performance, although block-storage is usable as well. With
                       the Volume Size, you can control how much persistent disk storage is allocated for MQ Kafka
                       (in Gi). 5Gi is recommended, but you can calculate how much storage you will need here:
-                      https://ibm.biz/BdPJjU
+                      https://ibm.biz/~8VMpGODay
                     properties:
                       volumeClaimTemplate:
                         description: Analytics MQ Kafka volume claim
@@ -827,7 +827,7 @@ spec:
                       as well. With the Volume Size, you can control how much persistent disk storage is allocated
                       for MQ Zookeeper (in Gi). 10Gi is recommended in a production environment, 5Gi in a
                       development environment, but you can calculate how much storage you will need here:
-                      https://ibm.biz/BdPJjU
+                      https://ibm.biz/~8VMpGODay
                     properties:
                       volumeClaimTemplate:
                         description: Analytics MQ Zookeeper volume claim
@@ -902,8 +902,8 @@ spec:
                       This subsection configures the 'Coord' persistent storage, which serves the microservice that manages the routing and aggregating of requests.
                       When you select the Storage Class, a local-volume storage is recommended for best performance, although block-storage is usable as well.
                       With the Volume Size, you can control how much persistent disk storage is allocated for Coord (in Gi).
-                      The default at 1Gi is recommended, but you can calculate how much storage you will need here: https://ibm.biz/BdPJjU
-                      For more info: https://ibm.biz/BdPJj5
+                      The default at 1Gi is recommended, but you can calculate how much storage you will need here: https://ibm.biz/~8VMpGODay
+                      For more info: https://ibm.biz/~0xtMRyyo5
                     properties:
                       volumeClaimTemplate:
                         description: Analytics storage persistent node volume claim
@@ -922,8 +922,8 @@ spec:
                       Configuring the Data storage can lead to a significant increase in performance, as it has the most workload.
                       When you select the Storage Class, a local-volume storage is recommended for best performance.
                       With the Volume Size, you can control how much persistent disk storage is allocated for Data (in Gi).
-                      The default is 50Gi, but it is HIGHLY recommended you calculate how much storage you will need here: https://ibm.biz/BdPJjU.
-                      For more info: https://ibm.biz/BdPJj5
+                      The default is 50Gi, but it is HIGHLY recommended you calculate how much storage you will need here: https://ibm.biz/~8VMpGODay.
+                      For more info: https://ibm.biz/~0xtMRyyo5
                     properties:
                       volumeClaimTemplate:
                         description: Analytics storage persistent node volume claim
@@ -944,8 +944,8 @@ spec:
                       This subsection configures the 'Master' persistent storage, which serves the microservice that manages cluster state and health.
                       When you select the Storage Class, a local-volume storage is recommended for best performance, although block storage is usable as well.
                       With the Volume Size, you can control how much persistent disk storage is allocated for Master (in Gi).
-                      The default is 5Gi, but you can calculate how much storage you will need here: https://ibm.biz/BdPJjU
-                      For more info: https://ibm.biz/BdPJj5
+                      The default is 5Gi, but you can calculate how much storage you will need here: https://ibm.biz/~8VMpGODay
+                      For more info: https://ibm.biz/~0xtMRyyo5
                     properties:
                       volumeClaimTemplate:
                         description: Analytics storage persistent node volume claim
@@ -4089,7 +4089,7 @@ spec:
       openAPIV3Schema:
         description: |-
           AnalyticsRestore is the Schema for the analyticsrestores API.
-          For more info on Analytics restoration, visit: https://ibm.biz/BdPJjN.
+          For more info on Analytics restoration, visit: https://ibm.biz/~IuktOXN0f.
         properties:
           apiVersion:
             description: |-
@@ -4969,7 +4969,7 @@ spec:
                           storage is recommended for best performance, although block-storage is usable as well. With
                           the Volume Size, you can control how much persistent disk storage is allocated for MQ Kafka
                           (in Gi). 5Gi is recommended, but you can calculate how much storage you will need here:
-                          https://ibm.biz/BdPJjU
+                          https://ibm.biz/~8VMpGODay
                         properties:
                           volumeClaimTemplate:
                             description: Analytics MQ Kafka volume claim
@@ -4991,7 +4991,7 @@ spec:
                           as well. With the Volume Size, you can control how much persistent disk storage is allocated
                           for MQ Zookeeper (in Gi). 10Gi is recommended in a production environment, 5Gi in a
                           development environment, but you can calculate how much storage you will need here:
-                          https://ibm.biz/BdPJjU
+                          https://ibm.biz/~8VMpGODay
                         properties:
                           volumeClaimTemplate:
                             description: Analytics MQ Zookeeper volume claim
@@ -5068,8 +5068,8 @@ spec:
                           This subsection configures the 'Coord' persistent storage, which serves the microservice that manages the routing and aggregating of requests.
                           When you select the Storage Class, a local-volume storage is recommended for best performance, although block-storage is usable as well.
                           With the Volume Size, you can control how much persistent disk storage is allocated for Coord (in Gi).
-                          The default at 1Gi is recommended, but you can calculate how much storage you will need here: https://ibm.biz/BdPJjU
-                          For more info: https://ibm.biz/BdPJj5
+                          The default at 1Gi is recommended, but you can calculate how much storage you will need here: https://ibm.biz/~8VMpGODay
+                          For more info: https://ibm.biz/~0xtMRyyo5
                         properties:
                           volumeClaimTemplate:
                             description: Analytics storage persistent node volume
@@ -5090,8 +5090,8 @@ spec:
                           Configuring the Data storage can lead to a significant increase in performance, as it has the most workload.
                           When you select the Storage Class, a local-volume storage is recommended for best performance.
                           With the Volume Size, you can control how much persistent disk storage is allocated for Data (in Gi).
-                          The default is 50Gi, but it is HIGHLY recommended you calculate how much storage you will need here: https://ibm.biz/BdPJjU.
-                          For more info: https://ibm.biz/BdPJj5
+                          The default is 50Gi, but it is HIGHLY recommended you calculate how much storage you will need here: https://ibm.biz/~8VMpGODay.
+                          For more info: https://ibm.biz/~0xtMRyyo5
                         properties:
                           volumeClaimTemplate:
                             description: Analytics storage persistent node volume
@@ -5114,8 +5114,8 @@ spec:
                           This subsection configures the 'Master' persistent storage, which serves the microservice that manages cluster state and health.
                           When you select the Storage Class, a local-volume storage is recommended for best performance, although block storage is usable as well.
                           With the Volume Size, you can control how much persistent disk storage is allocated for Master (in Gi).
-                          The default is 5Gi, but you can calculate how much storage you will need here: https://ibm.biz/BdPJjU
-                          For more info: https://ibm.biz/BdPJj5
+                          The default is 5Gi, but you can calculate how much storage you will need here: https://ibm.biz/~8VMpGODay
+                          For more info: https://ibm.biz/~0xtMRyyo5
                         properties:
                           volumeClaimTemplate:
                             description: Analytics storage persistent node volume
@@ -6151,7 +6151,7 @@ spec:
                     properties:
                       enabled:
                         description: Enable tracing for use with the IBM Cloud Pak
-                          for Integration Operations Dashboard. https://ibm.biz/BdfhqH
+                          for Integration Operations Dashboard. https://ibm.biz/~6MSJPM6JR
                         type: boolean
                       imageAgent:
                         description: Image for agent container (deprecated)
@@ -6164,7 +6164,7 @@ spec:
                         type: string
                       odTracingNamespace:
                         description: Namespace where the IBM Cloud Pak for Integration
-                          Operations Dashboard has been deployed. https://ibm.biz/BdfhqH
+                          Operations Dashboard has been deployed. https://ibm.biz/~6MSJPM6JR
                         minLength: 1
                         type: string
                       odTracingRegistrationHostname:
@@ -6757,7 +6757,7 @@ spec:
                     x-kubernetes-list-type: atomic
                   databaseBackup:
                     description: 'These settings configure backups for your APIC resources
-                      (apis, products, etc.), users, and tenancy. More info: https://ibm.biz/BdPJZD.'
+                      (apis, products, etc.), users, and tenancy. More info: https://ibm.biz/~nwHwOt8zW.'
                     properties:
                       backupCerts:
                         description: |-
@@ -6813,7 +6813,7 @@ spec:
                           All  backups and archives associated with the deleted full backup will also expire.
                           Allowed values are 1-9999999.
                           Important: For S3 backups of the management subsystem, do not use retention features provided by Cloud-based S3 storage providers. Use of such features can result in periodic deletion of archived backups, which can cause backup corruptions which can cause database restores to fail.
-                          For more info: https://ibm.biz/BdPJZi
+                          For more info: https://ibm.biz/~nwHwOt8zW
                         format: int32
                         type: integer
                       restartDB:
@@ -7024,7 +7024,7 @@ spec:
                   multiSiteHA:
                     description: |-
                       Multisite high availability configuration.
-                      More info: https://ibm.biz/BdPJZF
+                      More info: https://ibm.biz/~uPaIZ34GJ
                     properties:
                       mode:
                         description: Replication mode
@@ -7149,12 +7149,12 @@ spec:
                       Site name is the logical name of the failure domain of this management subsystem. Typically site name is the name of your data center, Amazon AZ, etc.
                       The default is a randomly generated name.
                       For example, given the site name of 'test' your management deployment will look like 'management-test-postgres'.
-                      For more info: https://ibm.biz/BdPJZF
+                      For more info: https://ibm.biz/~uPaIZ34GJ
                     type: string
                   testAndMonitor:
                     description: |-
                       Test and Monitor automatically generates API test assertions. It contains dashboards for monitoring API test
-                      assertions and getting alerts on the health of your APIs. For more info, see: https://ibm.biz/BdPJZE
+                      assertions and getting alerts on the health of your APIs. For more info, see: https://ibm.biz/~cArnZeJ9z
                     properties:
                       aiEnabled:
                         description: This field is no longer used
@@ -7422,7 +7422,7 @@ spec:
                   multiSiteHA:
                     description: |-
                       Multisite high availability configuration
-                      More info: https://ibm.biz/BdPJZF
+                      More info: https://ibm.biz/~uPaIZ34GJ
                     properties:
                       mode:
                         description: Replication mode
@@ -7516,17 +7516,17 @@ spec:
                       backupCerts:
                         description: |-
                           Backup certs which are used for TLS communication between Portal and backup server. Only supported for s3 backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: string
                       backupRecordDays:
                         description: |-
                           This is the number of days that backup records (backups that exist on the remote backup server) will be shown. Defaults to 30 days.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: integer
                       backups3URIStyle:
                         description: |-
                           This supports either host or path. Default is host. Only supported for s3 backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         enum:
                         - host
                         - path
@@ -7536,33 +7536,33 @@ spec:
                           For objstore, this is the name of your Kubernetes secret that was generated with your username and password for your backup database.
                           For sftp, this is the secret that contains the credentials for your sftp username and password.
                           Required if configuring backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: string
                       host:
                         description: |-
                           For objstore, this is the S3 endpoint with the corresponding S3 region in the format <S3endpoint>/<S3region>. For example: 's3.eu-gb.cloud-object-storage.appdomain.cloud/eu-standard'.
                           For sftp, this is the sftp server host name.
                           Required if configuring backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: string
                       path:
                         description: |-
                           For objstore, this is the name of your S3 bucket to store backup data. For example: 'test-bucket/restore-test'.
                           For sftp, this is the path to the folder on the sftp server.
                           Required if configuring backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: string
                       port:
                         description: |-
                           This is the port for the protocol to connect to the host. There is no default.
                           Set if necessary to your host.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         type: integer
                       protocol:
                         description: |-
                           Choose the protocol (sftp or objstore) you wish to use to communicate with your remote backup endpoint. Objstore is recommended for most reliability. There is no default.
                           This field MUST be set to sftp or objstore to configure backups.
-                          For more info: https://ibm.biz/BdPJZZ
+                          For more info: https://ibm.biz/~Okrzyw7UC
                         enum:
                         - objstore
                         - sftp
@@ -7571,7 +7571,7 @@ spec:
                       schedule:
                         description: |-
                           This is the schedule in cron string format for how often automatic Developer Portal backups are run. For example, '0 */3 * * *' means 'At minute 0 past every 3rd hour'.
-                          There is no default. Required if configuring backups. For more info, see: https://ibm.biz/BdPJZZ
+                          There is no default. Required if configuring backups. For more info, see: https://ibm.biz/~Okrzyw7UC
                         type: string
                     type: object
                   portalUIEndpoint:
@@ -7605,7 +7605,7 @@ spec:
                     description: |-
                       Site name is the logical name of the failure domain of this portal subsystem. Typically site name is the name of your data center, Amazon AZ, etc.
                       The default is a randomly generated name.
-                      For more info: https://ibm.biz/BdPJZX
+                      For more info: https://ibm.biz/~9SK68cGek
                     type: string
                   tolerations:
                     items:
@@ -10540,7 +10540,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: backups.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -11002,7 +11002,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: clusterimagecatalogs.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -11189,7 +11189,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: clusters.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -16960,7 +16960,6 @@ spec:
                       procMount denotes the type of proc mount to use for the containers.
                       The default value is Default which uses the container runtime defaults for
                       readonly paths and masked paths.
-                      This requires the ProcMountType feature flag to be enabled.
                       Note that this field cannot be set when spec.os.name is windows.
                     type: string
                   readOnlyRootFilesystem:
@@ -18649,7 +18648,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: databases.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -22491,7 +22490,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: failoverquorums.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -26840,7 +26839,7 @@ spec:
                 properties:
                   enabled:
                     description: Enable tracing for use with the IBM Cloud Pak for
-                      Integration Operations Dashboard. https://ibm.biz/BdfhqH
+                      Integration Operations Dashboard. https://ibm.biz/~6MSJPM6JR
                     type: boolean
                   imageAgent:
                     description: Image for agent container (deprecated)
@@ -26853,7 +26852,7 @@ spec:
                     type: string
                   odTracingNamespace:
                     description: Namespace where the IBM Cloud Pak for Integration
-                      Operations Dashboard has been deployed. https://ibm.biz/BdfhqH
+                      Operations Dashboard has been deployed. https://ibm.biz/~6MSJPM6JR
                     minLength: 1
                     type: string
                   odTracingRegistrationHostname:
@@ -29952,7 +29951,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: imagecatalogs.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -30534,7 +30533,7 @@ spec:
                 x-kubernetes-list-type: atomic
               databaseBackup:
                 description: 'These settings configure backups for your APIC resources
-                  (apis, products, etc.), users, and tenancy. More info: https://ibm.biz/BdPJZD.'
+                  (apis, products, etc.), users, and tenancy. More info: https://ibm.biz/~nwHwOt8zW.'
                 properties:
                   backupCerts:
                     description: |-
@@ -30590,7 +30589,7 @@ spec:
                       All  backups and archives associated with the deleted full backup will also expire.
                       Allowed values are 1-9999999.
                       Important: For S3 backups of the management subsystem, do not use retention features provided by Cloud-based S3 storage providers. Use of such features can result in periodic deletion of archived backups, which can cause backup corruptions which can cause database restores to fail.
-                      For more info: https://ibm.biz/BdPJZi
+                      For more info: https://ibm.biz/~nwHwOt8zW
                     format: int32
                     type: integer
                   restartDB:
@@ -30846,7 +30845,7 @@ spec:
               multiSiteHA:
                 description: |-
                   Multisite high availability configuration.
-                  More info: https://ibm.biz/BdPJZF
+                  More info: https://ibm.biz/~uPaIZ34GJ
                 properties:
                   mode:
                     description: Replication mode
@@ -30970,7 +30969,7 @@ spec:
                   Site name is the logical name of the failure domain of this management subsystem. Typically site name is the name of your data center, Amazon AZ, etc.
                   The default is a randomly generated name.
                   For example, given the site name of 'test' your management deployment will look like 'management-test-postgres'.
-                  For more info: https://ibm.biz/BdPJZF
+                  For more info: https://ibm.biz/~uPaIZ34GJ
                 type: string
               template:
                 description: Template is a list of Overrides for this cluster
@@ -33609,7 +33608,7 @@ spec:
               testAndMonitor:
                 description: |-
                   Test and Monitor automatically generates API test assertions. It contains dashboards for monitoring API test
-                  assertions and getting alerts on the health of your APIs. For more info, see: https://ibm.biz/BdPJZE
+                  assertions and getting alerts on the health of your APIs. For more info, see: https://ibm.biz/~cArnZeJ9z
                 properties:
                   aiEnabled:
                     description: This field is no longer used
@@ -33992,6 +33991,9 @@ spec:
                 type: string
               localMultiSiteHAPeerConfigHash:
                 description: Local Multisite HA peer configuration hash
+                type: string
+              mcpRegistryCredentialSecret:
+                description: Name of the MCP Registry Service credential secret
                 type: string
               message:
                 description: Message
@@ -37320,7 +37322,7 @@ spec:
                       All  backups and archives associated with the deleted full backup will also expire.
                       Allowed values are 1-9999999.
                       Important: For S3 backups of the management subsystem, do not use retention features provided by Cloud-based S3 storage providers. Use of such features can result in periodic deletion of archived backups, which can cause backup corruptions which can cause database restores to fail.
-                      For more info: https://ibm.biz/BdPJZi
+                      For more info: https://ibm.biz/~nwHwOt8zW
                     format: int32
                     type: integer
                   restartDB:
@@ -40855,7 +40857,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: poolers.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -43718,7 +43720,6 @@ spec:
                                     procMount denotes the type of proc mount to use for the containers.
                                     The default value is Default which uses the container runtime defaults for
                                     readonly paths and masked paths.
-                                    This requires the ProcMountType feature flag to be enabled.
                                     Note that this field cannot be set when spec.os.name is windows.
                                   type: string
                                 readOnlyRootFilesystem:
@@ -45289,7 +45290,6 @@ spec:
                                     procMount denotes the type of proc mount to use for the containers.
                                     The default value is Default which uses the container runtime defaults for
                                     readonly paths and masked paths.
-                                    This requires the ProcMountType feature flag to be enabled.
                                     Note that this field cannot be set when spec.os.name is windows.
                                   type: string
                                 readOnlyRootFilesystem:
@@ -45773,7 +45773,6 @@ spec:
                           When set to false, a new userns is created for the pod. Setting false is useful for
                           mitigating container breakout vulnerabilities even allowing users to run their
                           containers as root without actually having root privileges on the host.
-                          This field is alpha-level and is only honored by servers that enable the UserNamespacesSupport feature.
                         type: boolean
                       hostname:
                         description: |-
@@ -46943,7 +46942,6 @@ spec:
                                     procMount denotes the type of proc mount to use for the containers.
                                     The default value is Default which uses the container runtime defaults for
                                     readonly paths and masked paths.
-                                    This requires the ProcMountType feature flag to be enabled.
                                     Note that this field cannot be set when spec.os.name is windows.
                                   type: string
                                 readOnlyRootFilesystem:
@@ -47512,6 +47510,14 @@ spec:
 
                             It adds a name to it that uniquely identifies the ResourceClaim inside the Pod.
                             Containers that need access to the ResourceClaim reference it with this name.
+
+                            When the DRAWorkloadResourceClaims feature gate is enabled and this Pod
+                            belongs to a PodGroup, a PodResourceClaim is matched to a
+                            PodGroupResourceClaim if all of their fields are equal (Name,
+                            ResourceClaimName, and ResourceClaimTemplateName). A matched claim references
+                            a single ResourceClaim shared across all Pods in the PodGroup, reserved for
+                            the PodGroup in ResourceClaimStatus.ReservedFor rather than for individual
+                            Pods.
                           properties:
                             name:
                               description: |-
@@ -47536,6 +47542,16 @@ spec:
                                 will also be deleted. The pod name and resource name, along with a
                                 generated component, will be used to form a unique name for the
                                 ResourceClaim, which will be recorded in pod.status.resourceClaimStatuses.
+
+                                When the DRAWorkloadResourceClaims feature gate is enabled and the pod
+                                belongs to a PodGroup that defines a PodGroupResourceClaim with the same
+                                Name and ResourceClaimTemplateName, this PodResourceClaim resolves to the
+                                ResourceClaim generated for the PodGroup. All pods in the group that
+                                define an equivalent PodResourceClaim matching the
+                                PodGroupResourceClaim's Name and ResourceClaimTemplateName share the same
+                                generated ResourceClaim. ResourceClaims generated for a PodGroup are
+                                owned by the PodGroup and their lifecycles are tied to the PodGroup
+                                instead of any individual pod.
 
                                 This field is immutable and no changes will be made to the
                                 corresponding ResourceClaim by the control plane after creating the
@@ -47662,6 +47678,28 @@ spec:
                         x-kubernetes-list-map-keys:
                         - name
                         x-kubernetes-list-type: map
+                      schedulingGroup:
+                        description: |-
+                          SchedulingGroup provides a reference to the immediate scheduling runtime
+                          grouping object that this Pod belongs to.
+                          This field is used by the scheduler to identify the group and apply the
+                          correct group scheduling policies. The association with a group also
+                          impacts other lifecycle aspects of a Pod that are relevant in a wider context
+                          of scheduling like preemption, resource attachment, etc. If not specified,
+                          the Pod is treated as a single unit in all of these aspects.
+                          The group object referenced by this field may not exist at the time the
+                          Pod is created.
+                          This field is immutable, but a group object with the same name may be
+                          recreated with different policies. Doing this during pod scheduling
+                          may result in the placement not conforming to the expected policies.
+                        properties:
+                          podGroupName:
+                            description: |-
+                              PodGroupName specifies the name of the standalone PodGroup object
+                              that represents the runtime instance of this group.
+                              Must be a DNS subdomain.
+                            type: string
+                        type: object
                       securityContext:
                         description: |-
                           SecurityContext holds pod-level security attributes and common container settings.
@@ -49090,7 +49128,7 @@ spec:
                                 A failure to resolve or pull the image during pod startup will block containers from starting and may add significant latency. Failures will be retried using normal volume backoff and will be reported on the pod reason and message.
                                 The types of objects that may be mounted by this volume are defined by the container runtime implementation on a host machine and at minimum must include all valid types supported by the container image field.
                                 The OCI object gets mounted in a single directory (spec.containers[*].volumeMounts.mountPath) by merging the manifest layers in the same way as for container images.
-                                The volume will be mounted read-only (ro) and non-executable files (noexec).
+                                The volume will be mounted read-only (ro).
                                 Sub path mounts for containers are not supported (spec.containers[*].volumeMounts.subpath) before 1.33.
                                 The field spec.securityContext.fsGroupChangePolicy has no effect on this volume type.
                               properties:
@@ -49262,8 +49300,7 @@ spec:
                               description: |-
                                 portworxVolume represents a portworx volume attached and mounted on kubelets host machine.
                                 Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type
-                                are redirected to the pxd.portworx.com CSI driver when the CSIMigrationPortworx feature-gate
-                                is on.
+                                are redirected to the pxd.portworx.com CSI driver.
                               properties:
                                 fsType:
                                   description: |-
@@ -50086,42 +50123,6 @@ spec:
                         x-kubernetes-list-map-keys:
                         - name
                         x-kubernetes-list-type: map
-                      workloadRef:
-                        description: |-
-                          WorkloadRef provides a reference to the Workload object that this Pod belongs to.
-                          This field is used by the scheduler to identify the PodGroup and apply the
-                          correct group scheduling policies. The Workload object referenced
-                          by this field may not exist at the time the Pod is created.
-                          This field is immutable, but a Workload object with the same name
-                          may be recreated with different policies. Doing this during pod scheduling
-                          may result in the placement not conforming to the expected policies.
-                        properties:
-                          name:
-                            description: |-
-                              Name defines the name of the Workload object this Pod belongs to.
-                              Workload must be in the same namespace as the Pod.
-                              If it doesn't match any existing Workload, the Pod will remain unschedulable
-                              until a Workload object is created and observed by the kube-scheduler.
-                              It must be a DNS subdomain.
-                            type: string
-                          podGroup:
-                            description: |-
-                              PodGroup is the name of the PodGroup within the Workload that this Pod
-                              belongs to. If it doesn't match any existing PodGroup within the Workload,
-                              the Pod will remain unschedulable until the Workload object is recreated
-                              and observed by the kube-scheduler. It must be a DNS label.
-                            type: string
-                          podGroupReplicaKey:
-                            description: |-
-                              PodGroupReplicaKey specifies the replica key of the PodGroup to which this
-                              Pod belongs. It is used to distinguish pods belonging to different replicas
-                              of the same pod group. The pod group policy is applied separately to each replica.
-                              When set, it must be a DNS label.
-                            type: string
-                        required:
-                        - name
-                        - podGroup
-                        type: object
                     required:
                     - containers
                     type: object
@@ -50689,7 +50690,7 @@ spec:
               multiSiteHA:
                 description: |-
                   Multisite high availability configuration
-                  More info: https://ibm.biz/BdPJZF
+                  More info: https://ibm.biz/~uPaIZ34GJ
                 properties:
                   mode:
                     description: Replication mode
@@ -50778,17 +50779,17 @@ spec:
                   backupCerts:
                     description: |-
                       Backup certs which are used for TLS communication between Portal and backup server. Only supported for s3 backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: string
                   backupRecordDays:
                     description: |-
                       This is the number of days that backup records (backups that exist on the remote backup server) will be shown. Defaults to 30 days.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: integer
                   backups3URIStyle:
                     description: |-
                       This supports either host or path. Default is host. Only supported for s3 backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     enum:
                     - host
                     - path
@@ -50798,33 +50799,33 @@ spec:
                       For objstore, this is the name of your Kubernetes secret that was generated with your username and password for your backup database.
                       For sftp, this is the secret that contains the credentials for your sftp username and password.
                       Required if configuring backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: string
                   host:
                     description: |-
                       For objstore, this is the S3 endpoint with the corresponding S3 region in the format <S3endpoint>/<S3region>. For example: 's3.eu-gb.cloud-object-storage.appdomain.cloud/eu-standard'.
                       For sftp, this is the sftp server host name.
                       Required if configuring backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: string
                   path:
                     description: |-
                       For objstore, this is the name of your S3 bucket to store backup data. For example: 'test-bucket/restore-test'.
                       For sftp, this is the path to the folder on the sftp server.
                       Required if configuring backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: string
                   port:
                     description: |-
                       This is the port for the protocol to connect to the host. There is no default.
                       Set if necessary to your host.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     type: integer
                   protocol:
                     description: |-
                       Choose the protocol (sftp or objstore) you wish to use to communicate with your remote backup endpoint. Objstore is recommended for most reliability. There is no default.
                       This field MUST be set to sftp or objstore to configure backups.
-                      For more info: https://ibm.biz/BdPJZZ
+                      For more info: https://ibm.biz/~Okrzyw7UC
                     enum:
                     - objstore
                     - sftp
@@ -50833,7 +50834,7 @@ spec:
                   schedule:
                     description: |-
                       This is the schedule in cron string format for how often automatic Developer Portal backups are run. For example, '0 */3 * * *' means 'At minute 0 past every 3rd hour'.
-                      There is no default. Required if configuring backups. For more info, see: https://ibm.biz/BdPJZZ
+                      There is no default. Required if configuring backups. For more info, see: https://ibm.biz/~Okrzyw7UC
                     type: string
                 type: object
               portalUIEndpoint:
@@ -50872,7 +50873,7 @@ spec:
                 description: |-
                   Site name is the logical name of the failure domain of this portal subsystem. Typically site name is the name of your data center, Amazon AZ, etc.
                   The default is a randomly generated name.
-                  For more info: https://ibm.biz/BdPJZX
+                  For more info: https://ibm.biz/~9SK68cGek
                 type: string
               template:
                 description: Template is a list of Overrides for this cluster
@@ -53984,7 +53985,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: PortalRestore is the Schema for the portalrestores API. For more
-          info on Portal restoration refer to https://ibm.biz/BdPJZY.
+          info on Portal restoration refer to https://ibm.biz/~dTKvzSykC.
         properties:
           apiVersion:
             description: |-
@@ -54324,7 +54325,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: publications.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -54519,7 +54520,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: scheduledbackups.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -54710,7 +54711,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: subscriptions.postgresql.k8s.enterprisedb.io
 spec:
   group: postgresql.k8s.enterprisedb.io
@@ -55140,7 +55141,7 @@ spec:
                   schedule:
                     description: |-
                       This is the schedule in cron string format for how often automatic Developer Portal backups are run. For example, '0 */3 * * *' means 'At minute 0 past every 3rd hour'.
-                      There is no default. Required if configuring backups. For more info, see: https://ibm.biz/BdPJZZ
+                      There is no default. Required if configuring backups. For more info, see: https://ibm.biz/~Okrzyw7UC
                     type: string
                 type: object
               certManagerIssuer:
@@ -58419,7 +58420,7 @@ spec:
       openAPIV3Schema:
         description: |-
           WMAPIGatewayRestore is the Schema for the wmapigatewayrestores API.
-          For more info on WMAPIGateway restoration, visit: https://ibm.biz/BdPJjN.
+          For more info on WMAPIGateway restoration, visit: https://ibm.biz/~IuktOXN0f.
         properties:
           apiVersion:
             description: |-
@@ -58558,7 +58559,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator
@@ -58744,7 +58745,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator
@@ -58937,7 +58938,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator
@@ -59037,7 +59038,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator
@@ -61188,9 +61189,8 @@ spec:
                   labels
                 type: object
               odTracing:
-                description: |-
-                  DEPRECATED: This field is deprecated, as the feature has been removed.
-                  OpenTracingSpec defines desired state of agent and collector containers.
+                description: 'DEPRECATED: This field is deprecated, as the feature
+                  has been removed.'
                 properties:
                   agent:
                     description: Defines probes for agent container
@@ -61424,6 +61424,12 @@ spec:
                     - sha256
                     type: string
                 type: object
+              readOnlyRootFilesystem:
+                description: |-
+                  When enabled, the DataPower containers will run with a read-only root filesystem.
+                  This requires init containers to copy necessary directories to volumes
+                  as well as additional volume mounts.
+                type: boolean
               readinessProbe:
                 description: Customize the ReadinessProbe on created DataPower Pods.
                   Expected input is a full ReadinessProbe definition.
@@ -61689,7 +61695,10 @@ spec:
                     or ephemeral type
                   properties:
                     class:
-                      description: Class specifies the storage class for the PVC
+                      description: |-
+                        Class specifies the storage class.
+                        For ephemeral type: if specified, creates a generic ephemeral volume; otherwise creates EmptyDir.
+                        For persistent type: specifies the PVC storage class.
                       type: string
                     deleteClaim:
                       description: DeleteClaim defines if the volume claim should
@@ -61764,8 +61773,7 @@ spec:
                       - persistent
                       type: string
                     volumeMode:
-                      description: VolumeMode is Filesystem for persistent type; not
-                        applicable for ephemeral type
+                      description: 'DEPRECATED: VolumeMode is always set to Filesystem.'
                       type: string
                   required:
                   - path
@@ -61797,9 +61805,10 @@ spec:
                     operator:
                       description: |-
                         Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
+                        Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                         Exists is equivalent to wildcard for value, so that a pod can
                         tolerate all taints of a particular category.
+                        Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                       type: string
                     tolerationSeconds:
                       description: |-
@@ -62205,7 +62214,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator
@@ -62436,7 +62445,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    datapower.ibm.com/operator-version: 1.18.2
+    datapower.ibm.com/operator-version: 1.18.5
   creationTimestamp: null
   labels:
     app.kubernetes.io/instance: datapower-operator

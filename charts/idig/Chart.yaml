@@ -1,12 +1,12 @@
 apiVersion: v2
 name: idig
 description: >
-  IBM DataPower Interact Gateway (IDIG) 12.1.1 -- operators, dependencies
+  IBM DataPower Interact Gateway (IDIG) 12.1.1.3 -- operators, dependencies
   (API Connect, NanoGateway, Valkey) and the DatapowerInteractGatewayCluster
   custom resource, deployed wave by wave for OpenShift/Kubernetes.
 type: application
-version: 0.1.0
-appVersion: "12.1.1.2"
+version: 0.2.0
+appVersion: "12.1.1.3"
 kubeVersion: ">=1.27.0-0"
 keywords:
   - ibm
@@ -16,12 +16,3 @@ keywords:
   - gitops
 maintainers:
   - name: IDIG Platform Team
-dependencies:
-  - name: idig-crds
-    version: "0.1.0"
-    repository: "file://charts/idig-crds"
-    condition: idig-crds.enabled
-  - name: idig-crds-vendor
-    version: "0.1.0"
-    repository: "file://charts/idig-crds-vendor"
-    condition: idig-crds-vendor.enabled

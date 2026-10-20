@@ -11,9 +11,6 @@
 /idig-operator-release-files_*/
 
 # Helm
-# Note: charts/idig/charts/idig-crds/ IS versioned (it's a real sub-chart
-# with its own CRDs, not a fetched dependency) -- only the packaged .tgz
-# `helm dependency build` produces alongside it is generated/ignored.
 *.tgz
 
 # OS / editor cruft

@@ -280,9 +280,9 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: MUTATING_WEBHOOK
-          value: idig-operator-mutating-webhook-configuration
+          value: {{ include "idig.clusterName" (list . "idig-operator-mutating-webhook-configuration") }}
         - name: VALIDATING_WEBHOOK
-          value: idig-operator-validating-webhook-configuration
+          value: {{ include "idig.clusterName" (list . "idig-operator-validating-webhook-configuration") }}
         image: "{{ .Values.global.imageRegistry }}/{{ .Values.idigOperator.image }}"
         imagePullPolicy: Always
         resources:

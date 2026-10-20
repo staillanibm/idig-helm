@@ -8,7 +8,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: idig-operator-manager-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-manager-role") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -265,7 +265,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: idig-operator-manager-rolebinding
+  name: {{ include "idig.clusterName" (list . "idig-operator-manager-rolebinding") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -273,7 +273,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: idig-operator-manager-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-manager-role") }}
 subjects:
 - kind: ServiceAccount
   name: idig-operator-controller-manager
@@ -283,7 +283,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: idig-operator-webhook-delete-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-delete-role") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -301,7 +301,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: idig-operator-webhook-update-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-update-role") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -319,7 +319,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: idig-operator-webhook-delete-rolebinding
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-delete-rolebinding") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -327,7 +327,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: idig-operator-webhook-delete-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-delete-role") }}
 subjects:
 - kind: ServiceAccount
   name: idig-operator-controller-manager
@@ -336,7 +336,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: idig-operator-webhook-update-rolebinding
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-update-rolebinding") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -344,7 +344,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: idig-operator-webhook-update-role
+  name: {{ include "idig.clusterName" (list . "idig-operator-webhook-update-role") }}
 subjects:
 - kind: ServiceAccount
   name: idig-operator-controller-manager
@@ -371,7 +371,7 @@ spec:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: idig-operator-mutating-webhook-configuration
+  name: {{ include "idig.clusterName" (list . "idig-operator-mutating-webhook-configuration") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -384,6 +384,9 @@ webhooks:
       name: idig-operator-webhook-service
       namespace: {{ include "idig.namespace" . }}
       path: /mutate-datapowerinteractgateway-ibm-com-v1beta1-datapowerinteractgatewaycluster
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ include "idig.namespace" . }}
   failurePolicy: Fail
   name: mdatapowerinteractgatewaycluster.kb.io
   rules:
@@ -402,7 +405,7 @@ webhooks:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: idig-operator-validating-webhook-configuration
+  name: {{ include "idig.clusterName" (list . "idig-operator-validating-webhook-configuration") }}
   labels:
     {{- include "idig.labels" . | nindent 4 }}
   annotations:
@@ -415,6 +418,9 @@ webhooks:
       name: idig-operator-webhook-service
       namespace: {{ include "idig.namespace" . }}
       path: /validate-datapowerinteractgateway-ibm-com-v1beta1-datapowerinteractgatewaycluster
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ include "idig.namespace" . }}
   failurePolicy: Fail
   name: vdatapowerinteractgatewaycluster.kb.io
   rules:

@@ -2,22 +2,220 @@
 {{- if and .Values.idigNanoGatewayOperator.enabled (or (eq $wave "1") (eq $wave "all")) }}
 {{- include "idig.validateOperatorScope" . }}
 {{- include "idig.validateImagePullSecret" . }}
-# Wave 1 -- IDIG NanoGateway operator.
-# Reuses the "datapower-nano-operator" ServiceAccount/RBAC created by the
-# NanoGateway operator (same wave) -- no separate RBAC needed for this
-# Deployment. No dependency on Valkey/the IDIG cluster CR at startup --
-# this is a standard controller waiting for CRs, safe to start alongside
-# every other operator.
+# Wave 1 -- IDIG NanoGateway operator (idig-gw-operator).
+# Adapted from the vendor manifest ibm-idig-nanogw.yaml (12.1.1.3), which replaces
+# the separate datapower-nano-operator of earlier releases: this single operator
+# reconciles the nano.datapower.ibm.com and idig.datapower.ibm.com resources.
+# REPLACE-NAMESPACE -> {{ include "idig.namespace" . }}; the vendor's Namespace object
+# (datapower-nano-system) is dropped -- nothing in the manifest uses it.
+# Cluster-scoped objects get a per-namespace name (idig.clusterName) so they cannot
+# collide with another install on the same cluster, e.g. API Connect's own
+# datapower-nano-operator ClusterRole/ClusterRoleBinding.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: datapower-nano-operator
+  namespace: {{ include "idig.namespace" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "idig.clusterName" (list . "datapower-nano-operator") }}
+rules:
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses
+      - gateways
+      - httproutes
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses/status
+      - gateways/status
+      - httproutes/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - nano.datapower.ibm.com
+    resources:
+      - apis
+      - apisets
+      - assemblies
+      - autoscaleconfigs
+      - jwtproviders
+      - managements
+      - mcptools
+      - mcpprompts
+      - mcpresources
+      - oauthproviders
+      - runtimeconfigs
+      - runtimes
+      - tlsclientprofiles
+      - tlsserverprofiles
+      - userdefinedpolicies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - nano.datapower.ibm.com
+    resources:
+      - apis/status
+      - apisets/status
+      - assemblies/status
+      - autoscaleconfigs/status
+      - jwtproviders/status
+      - managements/scale
+      - managements/status
+      - mcptools/status
+      - mcpprompts/status
+      - mcpresources/status
+      - oauthproviders/status
+      - runtimeconfigs/status
+      - runtimes/scale
+      - runtimes/status
+      - tlsclientprofiles/status
+      - tlsserverprofiles/status
+      - userdefinedpolicies/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - rolebindings
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - idig.datapower.ibm.com
+    resources:
+      - idigruntimes
+      - idigruntimeconfigs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - idig.datapower.ibm.com
+    resources:
+      - idigruntimes/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - idig.datapower.ibm.com
+    resources:
+      - idigruntimes/status
+      - idigruntimes/scale
+      - idigruntimeconfigs/status
+    verbs:
+      - get
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "idig.clusterName" (list . "datapower-nano-operator") }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "idig.clusterName" (list . "datapower-nano-operator") }}
+subjects:
+  - kind: ServiceAccount
+    name: datapower-nano-operator
+    namespace: {{ include "idig.namespace" . }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: idig-gw-operator
   namespace: {{ include "idig.namespace" . }}
-  labels:
-    app.kubernetes.io/name: idig-gw-operator
-    {{- include "idig.labels" . | nindent 4 }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -47,6 +245,8 @@ spec:
       {{- end }}
       containers:
       - env:
+        - name: IDIG_LABEL_SELECTOR
+          value: {{ .Values.idigNanoGatewayOperator.labelSelector | quote }}
         - name: RUST_LOG
           value: idig_operator=info
         - name: RUST_BACKTRACE

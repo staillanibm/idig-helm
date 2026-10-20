@@ -86,11 +86,11 @@ kubectl rollout restart deployment envoy-gateway -n envoy-gateway-system
 kubectl rollout status deployment envoy-gateway -n envoy-gateway-system --timeout=120s
 ```
 
-The Gateway API CRDs, and the IDIG-specific `EnvoyProxy`/`GatewayClass` on top of the controller above, do not need a separate step — this chart creates them automatically (`idig-crds` sub-chart, and `templates/wave0-envoy-gateway.yaml` gated by `envoyGateway.enabled=true`, the default).
+The Gateway API CRDs are applied by `make crds PLATFORM=k8s` (see "CRDs" below). The IDIG-specific `EnvoyProxy`/`GatewayClass` on top of the controller above do not need a separate step — this chart creates them automatically (`templates/wave0-envoy-gateway.yaml` gated by `envoyGateway.enabled=true`, the default).
 
 ### OpenShift-only
 
-**OpenShift support requires IDIG 12.1.1.2 or later** — versions 12.1.1.0 and 12.1.1.1 support Kubernetes only. This chart's `Chart.yaml` tracks `appVersion: "12.1.1.2"`, so this is already satisfied as long as you don't override `global.imageRegistry`/tags to point at an older release.
+**OpenShift support requires IDIG 12.1.1.2 or later** — versions 12.1.1.0 and 12.1.1.1 support Kubernetes only. This chart's `Chart.yaml` tracks `appVersion: "12.1.1.3"`, so this is already satisfied as long as you don't override `global.imageRegistry`/tags to point at an older release.
 
 **OpenShift version:** 4.14 or later, but earlier than 4.20. `Chart.yaml`'s `kubeVersion` constraint does not capture this OCP-specific ceiling — verify manually.
 
@@ -164,7 +164,7 @@ The chart uses a `deployment.wave` parameter to control which components are dep
 | Wave | Deploys |
 |---|---|
 | 0 | IDIG's cert-manager Issuer/CA/Certificates |
-| 1 | All operators — APIC, NanoGateway, Valkey, IDIG NanoGateway, IDIG operator, and their CRDs |
+| 1 | All operators — APIC, Valkey, IDIG NanoGateway (`idig-gw-operator`, which replaces the separate NanoGateway operator since 12.1.1.3), IDIG operator |
 | 2 | The Valkey instance |
 | 3 | The IDIG cluster (`DatapowerInteractGatewayCluster` custom resource) |
 
@@ -183,7 +183,7 @@ export VALUES_FILE=examples/values-dev.yaml   # or examples/values-prod.yaml
 helm upgrade --install idig-prereqs . -f $VALUES_FILE --set deployment.wave=0 -n $NAMESPACE
 ```
 
-This first install also installs the CRDs (IDIG, NanoGateway, Valkey, Gateway API) from the `idig-crds` sub-charts.
+The CRDs are **not** installed by this chart: run `make crds PLATFORM=<k8s|ocp>` first (see "CRDs").
 
 Wait for the issuer and all certificates to be ready (cert-manager issues all 8 leaf certs from the trust chain; this normally takes a few seconds):
 
@@ -214,7 +214,6 @@ Wait for the operators to be ready:
 
 ```bash
 kubectl -n $NAMESPACE rollout status deployment/ibm-apiconnect
-kubectl -n $NAMESPACE rollout status deployment/datapower-nano-operator
 kubectl -n $NAMESPACE rollout status deployment/valkey-operator
 kubectl -n $NAMESPACE rollout status deployment/idig-gw-operator
 kubectl -n $NAMESPACE rollout status deployment/idig-operator
@@ -312,16 +311,24 @@ kubectl get issuer,certificate,secret -n $NAMESPACE -o yaml > cert-manager-backu
 
 **If `idigCluster.enableAnalytics=true`, set `idigCluster.analyticsSettings.clientSubjectDN` before touching anything else.** The IDIG operator's admission webhook validates this field on *every* CR patch when analytics is enabled — including the version bump a `helm upgrade` performs. An unset value here will make the upgrade fail at the webhook, not at Helm.
 
-**Upgrade order** (this chart's wave grouping doesn't currently express this — until it does, upgrade the operator images/values one wave-1 component at a time rather than all at once): APIC → NanoGateway → IDIG NanoGateway → IDIG operator, and only then bump the IDIG cluster CR's `spec.version` (wave 3).
+**Upgrade order** (this chart's wave grouping doesn't currently express this — until it does, upgrade the operator images/values one wave-1 component at a time rather than all at once): CRDs (`make crds`) → Valkey operator → APIC → IDIG NanoGateway (`idig-gw-operator`) → IDIG operator, and only then bump the IDIG cluster CR's `spec.version` (wave 3).
 
-**Re-apply CRDs before bumping each operator** — this chart's CRD sub-charts (`idig-crds`/`idig-crds-vendor`) are only applied at first `helm install` per Helm's own `crds/` semantics (see "Notes on this chart's construction" below); IBM's upgrade procedure treats a CRD refresh as a required step per release, not optional reference material:
+**12.1.1.2 → 12.1.1.3 specifics:**
+
+- The separate `datapower-nano-operator` Deployment is gone; `idig-gw-operator` now does its job. `helm upgrade` removes the old Deployment and its ClusterRole/ClusterRoleBinding.
+- Cluster-scoped objects are renamed with a per-namespace prefix (`global.clusterResourcePrefix`, default: the namespace), so the old, unprefixed ones are removed by the upgrade and recreated under the new names.
+- Valkey moves to `valkey-bundle:9.1` with a **persistent volume** (`valkey.storage`). IBM's procedure ("Migrate Valkey to Persistent Storage", in the release's README) must be followed for an existing Valkey. `persistentVolumeClaimRetentionPolicy.whenDeleted` is now `Retain`: deleting the Valkey no longer deletes its volume.
+- `idigCluster.nanoGateway.gatewayDomain` now defaults to `idig.<global.domain>` (was `nanogw.<global.domain>`). Set it explicitly to keep the previous value.
+- `idigOperator.image` overrides in older values files (the 12.1.1.2 ifix) must be removed.
+
+**Re-apply CRDs before bumping each operator** — IBM's upgrade procedure treats a CRD refresh as a required step per release:
 
 ```bash
-kubectl apply --server-side --force-conflicts -f charts/idig-crds/crds/<file>.yaml
-kubectl apply --server-side --force-conflicts -f charts/idig-crds-vendor/crds/<file>.yaml
+make crds-check PLATFORM=ocp   # read-only: what differs from the cluster
+make crds PLATFORM=ocp
 ```
 
-**cert-manager itself may also need upgrading** as part of this flow — check the target IDIG release's compatible cert-manager version (currently v1.20.3, see "Prerequisites") before proceeding, and upgrade it via the same method you originally installed it with (raw manifest on Kubernetes, OLM subscription channel on OpenShift).
+**cert-manager itself may also need upgrading** as part of this flow — check the target IDIG release's compatible cert-manager version (currently v1.21.1, see "Prerequisites") before proceeding, and upgrade it via the same method you originally installed it with (raw manifest on Kubernetes, OLM subscription channel on OpenShift).
 
 Then, once every operator and cert-manager are on the right versions, bump the values and re-run the wave-1 and wave-3 installs:
 
@@ -346,31 +353,30 @@ helm uninstall idig-prereqs -n $NAMESPACE   # only if you installed wave 0 yours
 
 Helm does not remove CRDs it created. Clean up secrets and CRDs separately if a full teardown is needed.
 
+## CRDs
+
+CRDs are cluster-scoped and can be shared with other installs on the same cluster (typically API Connect), so this chart does not install them: they live in `crds/` at the repo root and are applied by a dedicated target.
+
+```bash
+make crds-check PLATFORM=ocp   # read-only: compare crds/ with the cluster
+make crds PLATFORM=ocp         # check, then server-side apply and wait Established
+```
+
+`crds-check` classifies each CRD (descriptions ignored): `new`, `identical`, `additive` (the bundle only adds fields or enum values), `changed` (same fields, different values; review) and `INCOMPAT` (a field or version present on the cluster is missing from the bundle; `make crds` stops unless `FORCE=1`). `make prereqs` and `make deploy` run `make crds` first.
+
+`make crds` skips what it must not touch: the Gateway API CRDs on OpenShift (managed by the Ingress Operator) and the APIC/DataPower/EDB CRDs when API Connect is already installed (`APPLY_APIC=1` forces them). See `crds/README.md` for the origin and version of each file.
+
+## Coexisting with API Connect in another namespace
+
+Each install deploys its own operators and Valkey in its own namespace. Because some objects are cluster-scoped, three things keep two installs from interfering:
+
+1. **Names.** ClusterRoles, ClusterRoleBindings and webhook configurations are prefixed with `global.clusterResourcePrefix` (default: the namespace). Their webhooks only apply to objects of this install's namespace (`namespaceSelector`).
+2. **Valkey operator.** `WATCH_NAMESPACE` restricts it to its own namespace (`valkeyOperator.watchNamespace`). The API Connect install's own Valkey operator must be restricted the same way, otherwise it also reconciles this install's Valkey.
+3. **NanoGateway operator.** The API Connect operator (`datapower-nano-operator`) only supports a label filter (`DPN_LABEL_SELECTOR`, e.g. `managed-by!=idig`); it cannot be limited to a namespace. This chart's `idig-gw-operator` is driven by `idigNanoGatewayOperator.labelSelector` (`IDIG_LABEL_SELECTOR`), whose vendor default `managed-by!=XXXXXXXXXXXXXXXXXXX` matches every object. **Open point:** which label the 12.1.1.3 IDIG components put on the nano resources they create has not been verified; the two selectors must partition the objects of the two installs.
+
+`make preflight PLATFORM=ocp NAMESPACE=idig VALUES_FILE=...` checks all of this read-only against the cluster before installing: name collisions, whether the operators of other namespaces are restricted, CRD compatibility, and the API Connect version present.
+
 ## Notes on this chart's construction
-
-**CRDs live in two sub-charts**, not in `templates/` and not in this chart's own root `crds/`. Helm's release Secret has a 1 MiB size limit that a root chart's `crds/` directory still counts against — only `crds/` inside a genuine sub-chart dependency is exempt. This chart's combined vendor CRDs are several MB rendered, so they have to live in sub-charts:
-
-- `charts/idig-crds/` — mandatory CRDs: IDIG operator, NanoGateway operator, Valkey operator, and the Gateway API CRDs (copied from the vendor's `helper_files/`, since Gateway API has no upstream Helm chart to depend on directly). Always enabled.
-- `charts/idig-crds-vendor/` — CRDs that may already exist on the cluster: APIC operator CRDs (owned by OLM when API Connect is already installed) and Gateway API CRDs (owned by the OpenShift Ingress Operator on OCP 4.x). Disable with `idig-crds-vendor.enabled: false` on any cluster where these are already managed externally.
-
-Run `helm dependency update .` after changing anything under either sub-chart to regenerate the packaged `.tgz` files Helm actually reads.
-
-CRDs are applied once at first install and never touched by `helm upgrade`/`helm uninstall` — standard Helm `crds/` behavior. To update a CRD's schema later, apply it manually:
-
-```bash
-kubectl apply --server-side --force-conflicts -f charts/idig-crds/crds/<file>.yaml
-# or for vendor CRDs:
-kubectl apply --server-side --force-conflicts -f charts/idig-crds-vendor/crds/<file>.yaml
-```
-
-**APIC CRDs** (`charts/idig-crds-vendor/crds/apic-operator-crds.yaml`) are part of `idig-crds-vendor`. If your target cluster already has IBM API Connect installed via OLM, its APIC CRDs already exist and are owned by the `olm`/`catalog` field managers — set `idig-crds-vendor.enabled: false` or disable the sub-chart selectively to avoid conflicts. Check first:
-
-```bash
-oc get crd | grep apiconnect.ibm.com
-oc get subscriptions -A
-```
-
-On a cluster with no pre-existing APIC installation, keep `idig-crds-vendor.enabled: true` (the default) — the APIC operator needs its CRDs to exist somewhere.
 
 **Envoy Gateway configuration is Kubernetes-only, gated by `envoyGateway.enabled`.** `templates/wave0-envoy-gateway.yaml` creates the `EnvoyProxy`/`GatewayClass` resources IDIG needs on top of an already-installed Envoy Gateway controller. On OpenShift, where this has no equivalent (IDIG uses plain `Route` objects instead of Gateway API), `examples/values-ocp.yaml` sets `envoyGateway.enabled=false` so the template renders nothing. (Enabling Backend CR support on the `envoy-gateway-config` ConfigMap, covered in "Prerequisites" above, stays a manual step for a different reason: that object always pre-exists from Envoy Gateway's own install, and Helm cannot adopt a pre-existing object without ownership annotations already set on it.)
 

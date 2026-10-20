@@ -6,6 +6,25 @@ Target namespace for all IDIG resources.
 {{- end -}}
 
 {{/*
+Name for a cluster-scoped object (ClusterRole, ClusterRoleBinding, webhook
+configuration). Cluster-scoped names are shared by every install on the
+cluster, so they are prefixed with global.clusterResourcePrefix (default: the
+target namespace) to avoid colliding with another install of the same
+operators, e.g. API Connect in another namespace.
+Usage: {{ include "idig.clusterName" (list . "valkey-operator") }}
+*/}}
+{{- define "idig.clusterName" -}}
+{{- $ctx := index . 0 -}}
+{{- $prefix := default (include "idig.namespace" $ctx) $ctx.Values.global.clusterResourcePrefix -}}
+{{- $name := index . 1 -}}
+{{- if hasPrefix (printf "%s-" $prefix) $name -}}
+{{- $name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" $prefix $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Common labels applied to every resource this chart manages.
 */}}
 {{- define "idig.labels" -}}

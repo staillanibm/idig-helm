@@ -14,10 +14,10 @@ deployment:
   # Valid values: "0", "1", "2", "3", "all"
   # - "0": IDIG's cert-manager Issuer/CA/Certificates (requires cert-manager
   #        to already be present on the cluster -- see chart README
-  #        "Prerequisites"; the Gateway API CRDs are installed by this
-  #        chart's idig-crds sub-chart, no separate step needed)
+  #        "Prerequisites"; CRDs are applied beforehand by `make crds`,
+  #        not by this chart)
   # - "1": All operators (APIC, NanoGateway, Valkey, IDIG NanoGateway, IDIG
-  #        operator + their CRDs). Grouped in one wave because none of them
+  #        operator). Grouped in one wave because none of them
   #        depend on each other or on Valkey/the IDIG CR at startup -- they
   #        are standard controllers that just watch for CRs to reconcile.
   # - "2": Valkey instance (the Valkey custom resource)
@@ -32,22 +32,6 @@ deployment:
   #   helm install idig-valkey .    -f values-dev.yaml --set deployment.wave=2
   #   helm install idig-cluster .   -f values-dev.yaml --set deployment.wave=3
   wave: ""  # Must be explicitly set - no default to prevent accidental full deployment
-
-# -----------------------------------------------------------------------------
-# Sub-chart CRD toggles
-# -----------------------------------------------------------------------------
-# idig-crds: mandatory CRDs (IDIG operator, NanoGateway, Valkey).
-# Never disable unless you are absolutely sure these CRDs already exist.
-idig-crds:
-  enabled: true
-
-# idig-crds-vendor: CRDs that may be owned by another operator on the cluster:
-#   - Gateway API CRDs  → owned by the OpenShift Ingress Operator on OCP 4.x
-#   - APIC CRDs         → owned by OLM when API Connect is already installed
-# Set to false on OCP or any cluster where these CRDs are already managed
-# externally. Set to true on vanilla Kubernetes with no pre-existing APIC.
-idig-crds-vendor:
-  enabled: true
 
 # -----------------------------------------------------------------------------
 # Global / shared settings
@@ -90,12 +74,18 @@ global:
 
   # ibm-apiconnect operator image (used by the apic operator + its webhook
   # init containers). Pin to the sha256 digest from the vendor bundle
-  # (idig-operator-release-files_12.1.1.2/dependencies/ibm-apiconnect.yaml)
+  # (idig-operator-release-files_12.1.1.3/dependencies/ibm-apiconnect.yaml)
   # -- do not replace with a tag-named image or a custom build.
-  apiconnectOperatorImage: "ibm-apiconnect-operator@sha256:f026e8024f32366a6830040ea48a17547b5d4354302234dfd767be22b0cfce06"
+  apiconnectOperatorImage: "ibm-apiconnect-operator@sha256:ce1bfb46c85f965be2e92d8a44719145053d619d5785e52c95fcb128b164cb3b"
 
   # Base domain for all ingress endpoints (e.g. apps.<cluster-domain>).
   domain: ""
+
+  # Prefix of the cluster-scoped objects this chart creates (ClusterRole,
+  # ClusterRoleBinding, webhook configurations), which are shared by every
+  # install on the cluster. Empty = the namespace (global.namespace), e.g.
+  # "idig-valkey-operator", so two installs never collide.
+  clusterResourcePrefix: ""
 
   # Default storage class for persistent volumes. Empty = cluster default.
   storageClass: ""
@@ -209,26 +199,39 @@ apicOperator:
   # Deployment/Service/Role/etc. names come from the vendor manifest as-is;
   # nothing to override here today beyond enabled/imageRegistry.
 
-nanogatewayOperator:
-  enabled: true
-
 valkeyOperator:
   enabled: true
+  # WATCH_NAMESPACE of this install's Valkey operator. Empty = the release
+  # namespace (global.namespace), so it only reconciles its own Valkey and
+  # never one belonging to another install on the same cluster.
+  watchNamespace: ""
 
+# Single operator for the nano.datapower.ibm.com and idig.datapower.ibm.com
+# resources (replaces the separate datapower-nano-operator of 12.1.1.2).
 idigNanoGatewayOperator:
   enabled: true
-  image: "idig-gw-operator:12.1.1.0.29-20260826083315"
+  image: "idig-gw-operator:12.1.1.3.40-20261014154705"
+  # IDIG_LABEL_SELECTOR: which objects this operator reconciles. Default is the
+  # vendor's value (everything). When another install on the same cluster runs
+  # its own NanoGateway operator (API Connect), the two must not reconcile the
+  # same objects: see charts/idig/README.md "Coexisting with API Connect".
+  labelSelector: "managed-by!=XXXXXXXXXXXXXXXXXXX"
 
 idigOperator:
   enabled: true
-  image: "idig-operator:op.1.0.1.g.9c642fe.b.master.n.307"
+  image: "idig-operator:op.1.0.1.g.a00e6ff.b.master.n.524"
 
 # -----------------------------------------------------------------------------
 # Wave 2 -- Valkey instance
 # -----------------------------------------------------------------------------
 valkey:
   enabled: true
-  image: "valkey:8.1.4"
+  image: "valkey-bundle:9.1"
+  # Persistent volume for the Valkey data (12.1.1.3 persists the search
+  # indexes). Empty storageClass = global.storageClass (then cluster default).
+  storage:
+    size: 10Gi
+    storageClass: ""
   tlsSecretName: valkey-tls
   credentialSecretName: valkey-secret
   # valkey-tls is generated by cert-manager in wave 0 (see
@@ -252,8 +255,8 @@ idigCluster:
   name: idig
 
   # "dev" (minimal resources) or "prod" (high availability). See
-  # samples/idig-cluster-dev.yaml / idig-cluster-prod.yaml in the vendor
-  # release bundle for the profile this maps to.
+  # samples/idig-cluster.yaml in the vendor release bundle (12.1.1.3 has a
+  # single sample; its `profile:` field selects dev or prod).
   profile: dev
 
   enableAnalytics: false
@@ -288,10 +291,30 @@ idigCluster:
     # Base domain for the NanoGateway wildcard route (MCP servers / LLM
     # proxies), i.e. spec.nanoGateway.gatewayDomain on the
     # DatapowerInteractGatewayCluster CR. Empty = chart default
-    # "nanogw.<global.domain>". Set to global.domain itself (no "nanogw."
+    # "idig.<global.domain>" (the vendor sample's default since 12.1.1.3).
+    # Set to global.domain itself (no "idig."
     # prefix) if the route must fall under an existing wildcard cert's SAN
     # that only covers *.<global.domain> (one label deep).
     gatewayDomain: ""
+
+  # Optional (12.1.1.3). Each is rendered on the CR only when non-empty.
+  #
+  # Global runtime configuration for the Interact Gateway runtime
+  # (spec.runtimeConfig on the CR). Example:
+  #   runtimeConfig:
+  #     logLevel: info            # trace|debug|info|warn|error|off
+  #     runtimeEnv:
+  #       - name: RUST_LOG
+  #         value: "error,nanogw=debug"
+  #     openTelemetry:
+  #       endpoints:
+  #         - signals: {logs: true, traces: true, metrics: true}
+  runtimeConfig: {}
+  # Extra labels / annotations / nodeSelector (spec.labels, spec.annotations,
+  # spec.nodeSelector on the CR) -- map of string to string.
+  labels: {}
+  annotations: {}
+  nodeSelector: {}
 
   # The cert-manager issuer used by the IDIG operator to generate its
   # internal service certificates (only relevant when microServiceSecurity

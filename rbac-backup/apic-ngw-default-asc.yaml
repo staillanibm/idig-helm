@@ -1,0 +1,38 @@
+apiVersion: nano.datapower.ibm.com/v1alpha1
+kind: AutoScaleConfig
+metadata:
+  creationTimestamp: "2026-10-16T07:57:22Z"
+  generation: 1
+  name: ngw-default-asc
+  namespace: apic
+  ownerReferences:
+  - apiVersion: nano.datapower.ibm.com/v1alpha1
+    kind: NanoGatewayCluster
+    name: ngw
+    uid: c78625f5-bd57-4c43-8633-f45dea5fdd5a
+  resourceVersion: "138536"
+  uid: cc4cfbd3-7dd2-43f8-9676-f8fba162021f
+spec:
+  enabled: true
+  fromZero:
+    replicas: 1
+  hpa:
+    enabled: true
+    maxReplicas: 3
+    minReplicas: 1
+    targetUtilization:
+      cpu: 2400
+      memory: 2400
+  target:
+    kind: Runtime
+    labelSelectors:
+    - matchLabels: {}
+  toZero:
+    strategy:
+      sinceLastRequest:
+        seconds: 60
+  type: default
+status:
+  conditions: []
+  configMap: dpn-asc-ngw-default-asc-config
+  hash: ff5ad734ec2c9d2c6b4973c1ea9fae147812707364d3cf337b1d92b582de1d00

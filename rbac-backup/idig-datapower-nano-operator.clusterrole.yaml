@@ -1,0 +1,188 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    meta.helm.sh/release-name: idig-operators
+    meta.helm.sh/release-namespace: idig
+  creationTimestamp: "2026-10-19T15:52:53Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: idig-datapower-nano-operator
+  resourceVersion: "4666330"
+  uid: 8c85ed9e-bd33-436b-acbc-6ebcb723d9a1
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses
+  - gateways
+  - httproutes
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses/status
+  - gateways/status
+  - httproutes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - nano.datapower.ibm.com
+  resources:
+  - apis
+  - apisets
+  - assemblies
+  - autoscaleconfigs
+  - jwtproviders
+  - managements
+  - mcptools
+  - mcpprompts
+  - mcpresources
+  - oauthproviders
+  - runtimeconfigs
+  - runtimes
+  - tlsclientprofiles
+  - tlsserverprofiles
+  - userdefinedpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nano.datapower.ibm.com
+  resources:
+  - apis/status
+  - apisets/status
+  - assemblies/status
+  - autoscaleconfigs/status
+  - jwtproviders/status
+  - managements/scale
+  - managements/status
+  - mcptools/status
+  - mcpprompts/status
+  - mcpresources/status
+  - oauthproviders/status
+  - runtimeconfigs/status
+  - runtimes/scale
+  - runtimes/status
+  - tlsclientprofiles/status
+  - tlsserverprofiles/status
+  - userdefinedpolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - idig.datapower.ibm.com
+  resources:
+  - idigruntimes
+  - idigruntimeconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - idig.datapower.ibm.com
+  resources:
+  - idigruntimes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - idig.datapower.ibm.com
+  resources:
+  - idigruntimes/status
+  - idigruntimes/scale
+  - idigruntimeconfigs/status
+  verbs:
+  - get
+  - patch
+  - update

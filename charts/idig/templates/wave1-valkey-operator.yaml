@@ -26,7 +26,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: valkey-operator
+  name: {{ include "idig.clusterName" (list . "valkey-operator") }}
   labels:
     app.kubernetes.io/name : valkey-operator
     helm.sh/chart : valkey-operator-1.0.0
@@ -141,7 +141,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: valkey-operator
+  name: {{ include "idig.clusterName" (list . "valkey-operator") }}
   labels:
     app.kubernetes.io/name : valkey-operator
     helm.sh/chart : valkey-operator-1.0.0
@@ -156,7 +156,7 @@ subjects:
   namespace: {{ include "idig.namespace" . }}
 roleRef:
   kind: ClusterRole
-  name: valkey-operator
+  name: {{ include "idig.clusterName" (list . "valkey-operator") }}
   apiGroup: rbac.authorization.k8s.io
 ---
 # Source: valkey-operator/templates/operator-deployment.yaml
@@ -232,6 +232,11 @@ spec:
               fieldPath: metadata.namespace
         - name: FEATURE_GATES
           value: "GenerateConfigInInitContainer=true"
+        # Only reconcile Valkey resources of this install; without it the
+        # operator watches every namespace and would also act on another
+        # install's Valkey on the same cluster.
+        - name: WATCH_NAMESPACE
+          value: {{ default (include "idig.namespace" .) .Values.valkeyOperator.watchNamespace | quote }}
         resources: 
           limits:
             cpu: 500m

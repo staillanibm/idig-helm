@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"labels":{"app.kubernetes.io/managed-by":"kubectl","app.kubernetes.io/part-of":"ibm-apiconnect"},"name":"datapower-nano-operator"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"datapower-nano-operator"},"subjects":[{"kind":"ServiceAccount","name":"datapower-nano-operator","namespace":"apic"}]}
+  creationTimestamp: "2026-10-16T07:26:45Z"
+  labels:
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/part-of: ibm-apiconnect
+  name: datapower-nano-operator
+  resourceVersion: "102207"
+  uid: ec28de96-a640-4f66-a879-1fe2bc0f86bf
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: datapower-nano-operator
+subjects:
+- kind: ServiceAccount
+  name: datapower-nano-operator
+  namespace: apic

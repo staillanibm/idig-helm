@@ -1,5 +1,5 @@
 # Development profile -- minimal resources.
-# Maps to the vendor bundle's samples/idig-cluster-dev.yaml.
+# Maps to the vendor bundle's samples/idig-cluster.yaml (profile: dev).
 #
 # Usage:
 #   helm upgrade --install idig-prereqs charts/idig -f charts/idig/examples/values-dev.yaml \
@@ -7,16 +7,13 @@
 
 global:
   namespace: idig
-  imageRegistry: "quay-quay-quay.apps.itz-mps0y7.hub04-lb.techzone.ibm.com/idig" # REQUIRED: set to your mirrored registry (see scripts/mirror-images.sh)
+  imageRegistry: "quay-quay-quay.apps.itz-iscex5.infra01-lb.fra02.techzone.ibm.com/idig" # REQUIRED: set to your mirrored registry (see scripts/mirror-images.sh)
   imagePullSecret: "idig-registry-secret" # REQUIRED here: target cluster is not the same cluster as the registry, so same-namespace-only pull doesn't apply
-  # Moved off the OCP cluster domain onto a personal domain (sttlab.eu,
-  # OVH-hosted) so idig-web/devportal/analytics routes carry a
-  # publicly-trusted Let's Encrypt wildcard cert (apps-sttlab-eu-tls)
-  # instead of the OCP router's own cert. Requires a CNAME (*.apps ->
-  # router-default.apps.itz-h670hx...) already in place at OVH. Distinct
-  # from idigCluster.nanoGateway.gatewayDomain (nanogw.sttlab.eu) -- the
-  # admission webhook rejects the two being equal.
-  domain: "apps.sttlab.eu" # REQUIRED: base domain for ingress endpoints
+  # Base domain for ingress endpoints. No custom domain is imposed: this is
+  # the cluster's own ingress domain (what `make fill-values` auto-detects
+  # via `oc get ingresses.config/cluster`), so routes resolve through the
+  # OCP wildcard DNS with no external DNS setup.
+  domain: "apps.itz-iscex5.infra01-lb.fra02.techzone.ibm.com" # REQUIRED: base domain for ingress endpoints
   license:
     accept: true # REQUIRED: set to true to accept the IBM license
 idigCluster:
@@ -47,33 +44,15 @@ idigCluster:
   devPortalStorage:
     volumeSize: 20Gi
 
-  # Wildcard Let's Encrypt cert for apps.sttlab.eu / *.apps.sttlab.eu,
-  # issued via the sttlab-ovh-letsencrypt ClusterIssuer (DNS-01, OVH
-  # webhook) and copied into this namespace as apps-sttlab-eu-tls.
-  # Replaces the old idig-web-ocp-wildcard (OCP router cert, only valid
-  # while global.domain was the OCP cluster domain).
-  customIngressCertificate: "apps-sttlab-eu-tls"
-
-  # NanoGateway (MCP servers / LLM proxies) route domain, moved off
-  # global.domain entirely onto a personal domain (sttlab.eu, OVH-hosted)
-  # so it can carry a publicly-trusted Let's Encrypt wildcard cert instead
-  # of the chart-default self-signed nanogw-gateway-ca-cert. Requires a
-  # CNAME (nanogw + *.nanogw -> router-default.<global.domain>) already in
-  # place at OVH -- see idig_nanogw_tls_policy memory.
-  nanoGateway:
-    gatewayDomain: "nanogw.sttlab.eu"
-
-  # The NanoGateway wildcard route's TLS certificate is not configurable
-  # via values -- see docs/letsencrypt-certificates.md, section 2, for the
-  # manual step required after install.
+  # TLS: self-signed. Nothing to set here -- the wave 0 Issuer/CA
+  # (selfsigning-issuer -> ingress-ca -> ingress-issuer) issues every IDIG
+  # certificate, and the NanoGateway route keeps the chart-default
+  # self-signed nanogw-gateway-ca-cert. Clients must trust the generated CA
+  # (or skip verification) -- there is no publicly-trusted cert in this
+  # profile. customIngressCertificate is deliberately left unset.
+  #
+  # nanoGateway.gatewayDomain is also left unset: the chart then defaults to
+  # "idig.<global.domain>" (vendor default since 12.1.1.3), which the
+  # admission webhook accepts as it differs from global.domain.
 envoyGateway:
   enabled: false
-# On OCP, Gateway API CRDs are owned/managed by the OpenShift Ingress
-# Operator and rejected by a ValidatingAdmissionPolicy if this chart tries
-# to install its own copies. APIC CRDs may also already be owned by OLM.
-# Set to true instead on vanilla Kubernetes with no pre-existing APIC.
-idig-crds-vendor:
-  enabled: false
-idigOperator:
-  enabled: true
-  image: "idig-operator:op.1.0.1.g.53aec8c.b.v12112ifix1am3536.n.21@sha256:b810c3bfd491d3593cee507fc209e8de4a5da62e2947ad90e5877075939ffc60"

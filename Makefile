@@ -21,6 +21,7 @@ PLATFORM ?= ocp
 DOMAIN ?=
 CR_NAME ?= idig
 CHART_DIR := charts/idig
+KUBECTL ?= kubectl
 
 ifneq (,$(wildcard .env))
 include .env
@@ -34,6 +35,9 @@ help:
 	@echo "Targets:"
 	@echo "  make fill-values PLATFORM=k8s|ocp [DOMAIN=...]   Fill global.imageRegistry (from .env) and global.domain in VALUES_FILE"
 	@echo "  make check-values PLATFORM=k8s|ocp  Verify VALUES_FILE has imageRegistry/domain/license.accept set"
+	@echo "  make crds PLATFORM=k8s|ocp       Apply the CRDs in crds/ (checks them against the cluster first)"
+	@echo "  make crds-check PLATFORM=k8s|ocp Read-only: compare crds/ with the cluster (new/additive/changed/INCOMPAT)"
+	@echo "  make preflight PLATFORM=k8s|ocp  Read-only: name collisions, unrestricted operators of other namespaces, CRDs"
 	@echo "  make prereqs PLATFORM=k8s|ocp   Run all prerequisite steps for your platform"
 	@echo "    make cert-manager-k8s / envoy-gateway-install / envoy-gateway-enable-backend   (k8s steps, individually)"
 	@echo "    make cert-manager-ocp / wildcard-routes                                        (ocp steps, individually)"
@@ -109,8 +113,22 @@ check-values: check-platform
 # prereqs-ocp are pure orchestrators listing which steps apply per platform.
 # -----------------------------------------------------------------------------
 
+# CRDs are cluster-scoped and may be shared with other installs, so they are
+# applied here rather than by the Helm chart. See scripts/crds.sh.
+.PHONY: crds
+crds: check-platform
+	KUBECTL=$(KUBECTL) scripts/crds.sh apply $(PLATFORM)
+
+.PHONY: crds-check
+crds-check: check-platform
+	KUBECTL=$(KUBECTL) scripts/crds.sh check $(PLATFORM)
+
+.PHONY: preflight
+preflight: check-platform
+	KUBECTL=$(KUBECTL) scripts/preflight.sh $(PLATFORM) $(NAMESPACE) $(VALUES_FILE)
+
 .PHONY: prereqs
-prereqs: check-platform
+prereqs: check-platform crds
 ifeq ($(PLATFORM),k8s)
 	@$(MAKE) prereqs-k8s
 else
@@ -251,17 +269,9 @@ wave0:
 
 .PHONY: wave1
 wave1:
-	@echo "▶ Wave 1: operators (APIC, NanoGateway, Valkey, IDIG NanoGateway, IDIG)"
-	@VENDOR_ENABLED=$$(yq eval '."idig-crds-vendor".enabled' $(VALUES_FILE)); \
-	if [ "$$VENDOR_ENABLED" != "false" ] && [ $$(oc get crd -o name 2>/dev/null | grep -c 'apiconnect\.ibm\.com') -eq 0 ]; then \
-	  echo "⚠ idig-crds-vendor.enabled is not false in $(VALUES_FILE), but no apiconnect.ibm.com CRDs are on the cluster."; \
-	  echo "  If idig-prereqs (wave0) was already installed with idig-crds-vendor.enabled=false, 'helm upgrade' will NOT retroactively apply the CRDs -- Helm only applies a chart's crds/ on first install (see README 'Notes on this chart's construction')."; \
-	  echo "  Apply them manually before this wave's operators (ibm-apiconnect in particular) can start:"; \
-	  echo "    oc apply --server-side --force-conflicts -f $(CHART_DIR)/charts/idig-crds-vendor/crds/apic-operator-crds.yaml"; \
-	fi
+	@echo "▶ Wave 1: operators (APIC, Valkey, IDIG NanoGateway, IDIG)"
 	helm upgrade --install idig-operators $(CHART_DIR) -f $(VALUES_FILE) --set deployment.wave=1 -n $(NAMESPACE) --hide-notes
 	kubectl -n $(NAMESPACE) rollout status deployment/ibm-apiconnect
-	kubectl -n $(NAMESPACE) rollout status deployment/datapower-nano-operator
 	kubectl -n $(NAMESPACE) rollout status deployment/valkey-operator
 	kubectl -n $(NAMESPACE) rollout status deployment/idig-gw-operator
 	kubectl -n $(NAMESPACE) rollout status deployment/idig-operator

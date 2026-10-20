@@ -114,5 +114,24 @@ spec:
   # NanoGateway configuration is handled by the profile template.
   # To customize NanoGateway settings, patch the NanoGatewayCluster CR after creation.
   nanoGateway:
-    gatewayDomain: {{ .Values.idigCluster.nanoGateway.gatewayDomain | default (printf "nanogw.%s" .Values.global.domain) }}
+    gatewayDomain: {{ .Values.idigCluster.nanoGateway.gatewayDomain | default (printf "idig.%s" .Values.global.domain) }}
+
+  {{- with .Values.idigCluster.runtimeConfig }}
+
+  # Global runtime configuration propagated to the Interact Gateway RuntimeConfig CR.
+  runtimeConfig:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.idigCluster.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.idigCluster.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.idigCluster.nodeSelector }}
+  nodeSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}

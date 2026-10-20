@@ -38,6 +38,47 @@ data:
   {{- end }}
 {{- end }}
 ---
+# valkey-extra-config: appended verbatim by the Valkey operator to its generated
+# valkey.conf (12.1.1.3: loads the search/json/bloom modules of valkey-bundle).
+# Content from the vendor's dependencies/valkey-extra-config.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valkey-extra-config
+  namespace: {{ include "idig.namespace" . }}
+  labels:
+    app.kubernetes.io/name: valkey
+    {{- include "idig.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+data:
+  name: valkey-extra-config
+  namespace: REPLACE-NAMESPACE
+data:
+  # The valkey-operator appends this verbatim to its generated valkey.conf.
+  #
+  # Three bundle modules are declared explicitly here so the
+  # bundle-docker-entrypoint.sh auto-load loop skips them (it skips any .so
+  # already present in the config file) and Valkey loads them from this config
+  # with deterministic ordering and explicit arguments.
+  #
+  # libsearch.so args:
+  #   --reader-threads 2       explicit count; avoids thread count instability when
+  #   --writer-threads 5         the default (physical CPU count) is too high in containers
+  #
+  # NOTE: --use-coordinator is intentionally omitted. That flag is for cluster/sharded
+  # deployments only. In standalone mode it causes FT.CREATE to skip
+  # ValkeyModule_ReplicateVerbatim, so index schemas are never written to the AOF
+  # and are lost on every pod restart. IDIG deploys a single standalone Valkey
+  # instance (kind: Valkey, not ValkeyCluster), so this flag must not be set.
+  # See: AM-3954
+  #
+  # Note: libvalkey_ldap.so is NOT included — it is not present in valkey-bundle:9.1.
+  valkey.conf: |
+    loadmodule /usr/lib/valkey/libsearch.so --reader-threads 2 --writer-threads 5
+    loadmodule /usr/lib/valkey/libjson.so
+    loadmodule /usr/lib/valkey/libvalkey_bloom.so
+---
 apiVersion: valkey.datapower.ibm.com/v1beta2
 kind: Valkey
 metadata:
@@ -59,7 +100,7 @@ spec:
       name: {{ .Values.valkey.credentialSecretName | quote }}
       key: "password"
     persistentVolumeClaimRetentionPolicy:
-      whenDeleted: Delete
+      whenDeleted: Retain
       whenScaled: Retain
   TLS:
     ca: "ca.crt"
@@ -67,4 +108,38 @@ spec:
     key: "tls.key"
     secret:
       secretName: {{ .Values.valkey.tlsSecretName | quote }}
+  storage:
+    volumeClaimTemplate:
+      spec:
+        {{- $valkeyStorageClass := .Values.valkey.storage.storageClass | default .Values.global.storageClass }}
+        {{- if $valkeyStorageClass }}
+        storageClassName: {{ $valkeyStorageClass | quote }}
+        {{- end }}
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.valkey.storage.size | quote }}
+  valkeyConfig:
+    additionalValkeyConfig: valkey-extra-config
+  livenessProbe:
+    exec:
+      command:
+        - sh
+        - -c
+        - valkey-cli -h ${HOSTNAME} -p ${VALKEY_PORT} -a ${VALKEY_PASSWORD} --tls --cert ${VALKEY_TLS_CERT} --key ${VALKEY_TLS_CERT_KEY} --cacert ${VALKEY_TLS_CA_KEY} ping
+    failureThreshold: 3
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+  readinessProbe:
+    exec:
+      command:
+        - sh
+        - -c
+        - valkey-cli -h ${HOSTNAME} -p ${VALKEY_PORT} -a ${VALKEY_PASSWORD} --tls --cert ${VALKEY_TLS_CERT} --key ${VALKEY_TLS_CERT_KEY} --cacert ${VALKEY_TLS_CA_KEY} ping
+    failureThreshold: 3
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
 {{- end }}
